@@ -1,56 +1,60 @@
 {
-    "expo": {
-        "name": "뛰어 (Twieo)",
-        "slug": "twieo",
-        "version": "1.0.0",
-        "orientation": "portrait",
-        "icon": "./assets/icon.png",
-        "userInterfaceStyle": "light",
-        "splash": {
-            "image": "./assets/splash.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#FF6B6B"
-        },
-        "assetBundlePatterns": [
-            "**/*"
-        ],
-        "platforms": [
-            "ios",
-            "android",
-            "web"
-        ],
-        "ios": {
-            "supportsTablet": true,
-            "bundleIdentifier": "com.twieo.app"
-        },
-        "android": {
-            "package": "com.twieo.app",
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/adaptive-icon.png",
-                "backgroundColor": "#FF6B6B"
-            },
-            "permissions": [
-                "ACCESS_FINE_LOCATION",
-                "ACCESS_COARSE_LOCATION",
-                "CAMERA",
-                "READ_EXTERNAL_STORAGE",
-                "WRITE_EXTERNAL_STORAGE"
-            ]
-        },
-        "web": {
-            "favicon": "./assets/favicon.png"
-        },
-        "extra": {
-            "environment": "development"
-        },
-        "plugins": [
-            "expo-location",
-            [
-                "expo-image-picker",
-                {
-                    "photosPermission": "앱에서 사진을 선택하려면 권한이 필요합니다."
-                }
-            ]
-        ]
-    }
+  "expo": {
+    "name": "뛰어 (Twieo)",
+    "slug": "twieo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/adaptive-icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/adaptive-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6B6B"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.twieo.app"
+    },
+    "android": {
+      "package": "com.twieo.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FF6B6B"
+      },
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "environment": "production",
+      "eas": {
+        "projectId": "570ca195-d230-44b4-bd78-9e139dbd832d"
+      }
+    },
+    "plugins": [
+      "expo-location",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "앱에서 사진을 선택하려면 권한이 필요합니다."
+        }
+      ]
+    ]
+  }
 }

@@ -28,8 +28,8 @@ except ImportError:
     generate_circular_route = None
     generate_multiple_routes = None
 
-# 데이터베이스 테이블 생성
-models.Base.metadata.create_all(bind=engine)
+# 데이터베이스 테이블 생성 (배포 환경에서는 주석 처리)
+# models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="뛰어 (Twieo) API", version="1.0.0")
 
@@ -44,17 +44,11 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 
 if ENVIRONMENT == "production":
-    # 프로덕션: 환경 변수에서 허용 도메인 가져오기
-    allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "")
-    if allowed_origins_str:
-        allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
-    else:
-        # 기본값 (실제 배포 시 반드시 ALLOWED_ORIGINS 환경 변수 설정 필요)
-        allowed_origins = [
-            "https://yourdomain.com",
-            "https://app.yourdomain.com",
-        ]
-        print("⚠️  WARNING: Using default CORS origins. Set ALLOWED_ORIGINS environment variable!")
+    # 프로덕션: 실제 서비스 도메인 허용
+    allowed_origins = [
+        "https://twieo.shop",
+        "https://www.twieo.shop",
+    ]
 else:
     # 개발: 로컬 개발 환경 허용
     allowed_origins = [
