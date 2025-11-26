@@ -1,0 +1,69 @@
+# 환경 변수 및 보안 파일
+.env
+.env.local
+.env.development
+.env.production
+*.env
+*.pem
+
+# 데이터베이스
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 로그
+*.log
+logs/
+
+# 업로드 파일
+backend/uploads/
+uploads/
+
+# 캐시
+backend/cache/
+*.pyc
+
+# 테스트
+.coverage
+htmlcov/
+.pytest_cache/
+
+# 빌드
+build/
+*.apk
+*.ipa
+*.aab

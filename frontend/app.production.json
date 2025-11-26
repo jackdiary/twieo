@@ -1,0 +1,59 @@
+{
+    "expo": {
+        "name": "뛰어 (Twieo)",
+        "slug": "twieo",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "userInterfaceStyle": "light",
+        "splash": {
+            "image": "./assets/splash.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#FF6B6B"
+        },
+        "assetBundlePatterns": [
+            "**/*"
+        ],
+        "platforms": [
+            "ios",
+            "android",
+            "web"
+        ],
+        "ios": {
+            "supportsTablet": true,
+            "bundleIdentifier": "com.twieo.app",
+            "buildNumber": "1.0.0"
+        },
+        "android": {
+            "package": "com.twieo.app",
+            "versionCode": 1,
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/adaptive-icon.png",
+                "backgroundColor": "#FF6B6B"
+            },
+            "permissions": [
+                "ACCESS_FINE_LOCATION",
+                "ACCESS_COARSE_LOCATION",
+                "CAMERA",
+                "READ_EXTERNAL_STORAGE",
+                "WRITE_EXTERNAL_STORAGE"
+            ]
+        },
+        "web": {
+            "favicon": "./assets/favicon.png"
+        },
+        "extra": {
+            "environment": "production",
+            "apiUrl": "https://api.yourdomain.com"
+        },
+        "plugins": [
+            "expo-location",
+            [
+                "expo-image-picker",
+                {
+                    "photosPermission": "앱에서 사진을 선택하려면 권한이 필요합니다."
+                }
+            ]
+        ]
+    }
+}
