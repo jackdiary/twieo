@@ -23,6 +23,7 @@ import HelpScreen from './screens/HelpScreen';
 import GoalsScreen from './screens/GoalsScreen';
 import AchievementsScreen from './screens/AchievementsScreen';
 import ChallengesScreen from './screens/ChallengesScreen';
+import ChallengeDetailScreen from './screens/ChallengeDetailScreen';
 import ChangePasswordScreen from './screens/ChangePasswordScreen';
 
 const Tab = createBottomTabNavigator();
@@ -61,6 +62,7 @@ function MainTabs() {
 }
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from './config/api';
 
 export default function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -74,19 +76,58 @@ export default function App() {
         try {
             const token = await AsyncStorage.getItem('token');
             if (token) {
-                setIsLoggedIn(true);
+                // 토큰이 있으면 유효성 검증 (타임아웃 설정)
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5초 타임아웃
+
+                    const response = await fetch(`${API_URL}/api/auth/users/me`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        signal: controller.signal,
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) {
+                        setIsLoggedIn(true);
+                    } else {
+                        // 토큰이 유효하지 않으면 제거
+                        await AsyncStorage.removeItem('token');
+                        await AsyncStorage.removeItem('userEmail');
+                        await AsyncStorage.removeItem('username');
+                        setIsLoggedIn(false);
+                    }
+                } catch (error) {
+                    console.error('토큰 검증 실패:', error.message);
+                    // 네트워크 에러 시 토큰은 유지하고 로그인 상태로 진행
+                    // (오프라인에서도 앱 사용 가능하도록)
+                    if (error.name === 'AbortError') {
+                        console.log('토큰 검증 타임아웃 - 로그인 상태 유지');
+                        setIsLoggedIn(true);
+                    } else {
+                        setIsLoggedIn(false);
+                    }
+                }
             } else {
                 setIsLoggedIn(false);
             }
         } catch (error) {
             console.error('로그인 상태 확인 실패:', error);
+            setIsLoggedIn(false);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleLogout = () => {
-        setIsLoggedIn(false);
+    const handleLogout = async () => {
+        try {
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('userEmail');
+            await AsyncStorage.removeItem('username');
+            setIsLoggedIn(false);
+        } catch (error) {
+            console.error('로그아웃 실패:', error);
+        }
     };
 
     if (isLoading) {
@@ -117,6 +158,7 @@ export default function App() {
                                 <Stack.Screen name="Goals" component={GoalsScreen} />
                                 <Stack.Screen name="Achievements" component={AchievementsScreen} />
                                 <Stack.Screen name="Challenges" component={ChallengesScreen} />
+                                <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
                                 <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
                             </>
                         )}

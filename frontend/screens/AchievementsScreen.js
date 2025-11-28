@@ -21,7 +21,7 @@ export default function AchievementsScreen({ navigation }) {
             const token = await AsyncStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`${API_URL}/api/achievements`, {
+            const response = await fetch(`${API_URL}/api/achievements/`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
 
@@ -136,8 +136,8 @@ export default function AchievementsScreen({ navigation }) {
                 </View>
 
                 {/* Content */}
-                <ScrollView 
-                    style={styles.content} 
+                <ScrollView
+                    style={styles.content}
                     contentContainerStyle={styles.contentContainer}
                     showsVerticalScrollIndicator={false}
                 >
@@ -148,7 +148,7 @@ export default function AchievementsScreen({ navigation }) {
                     ) : filteredAchievements.length === 0 ? (
                         <View style={styles.emptyContainer}>
                             <Ionicons name="trophy-outline" size={60} color="rgba(255, 255, 255, 0.5)" />
-                            <Text style={styles.emptyText}>업적이 없습니다</Text>
+                            <Text style={styles.emptyText}>아직 달성한 업적이 없습니다</Text>
                         </View>
                     ) : (
                         filteredAchievements.map((achievement) => (

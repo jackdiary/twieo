@@ -38,8 +38,8 @@ export default function RegisterScreen({ navigation, onRegister }) {
         setLoading(true);
         try {
             console.log('회원가입 요청:', { email, username });
-            
-            const response = await fetch(`${API_URL}/api/auth/register`, {
+
+            const response = await fetch(`${API_URL}/api/auth/register/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ export default function RegisterScreen({ navigation, onRegister }) {
                 loginFormData.append('username', email.trim());
                 loginFormData.append('password', password);
 
-                const loginResponse = await fetch(`${API_URL}/api/auth/login`, {
+                const loginResponse = await fetch(`${API_URL}/api/auth/login/`, {
                     method: 'POST',
                     body: loginFormData,
                 });
@@ -70,9 +70,9 @@ export default function RegisterScreen({ navigation, onRegister }) {
                     await AsyncStorage.setItem('token', loginData.access_token);
                     await AsyncStorage.setItem('userEmail', email.trim());
                     await AsyncStorage.setItem('username', username.trim());
-                    
+
                     Alert.alert('성공', '회원가입이 완료되었습니다!');
-                    
+
                     if (onRegister) {
                         onRegister();
                     }
@@ -84,7 +84,7 @@ export default function RegisterScreen({ navigation, onRegister }) {
             } else {
                 // 상세한 에러 메시지 표시
                 let errorMessage = '회원가입 중 오류가 발생했습니다.';
-                
+
                 if (response.status === 422) {
                     // 유효성 검사 실패
                     if (data.detail && Array.isArray(data.detail)) {
@@ -102,9 +102,9 @@ export default function RegisterScreen({ navigation, onRegister }) {
                 } else if (data.detail) {
                     errorMessage = data.detail;
                 }
-                
+
                 Alert.alert(
-                    '회원가입 실패', 
+                    '회원가입 실패',
                     errorMessage,
                     [{ text: '확인' }]
                 );
@@ -112,7 +112,7 @@ export default function RegisterScreen({ navigation, onRegister }) {
         } catch (error) {
             console.error('회원가입 오류:', error);
             Alert.alert(
-                '오류', 
+                '오류',
                 `서버와 연결할 수 없습니다.\n\n에러: ${error.message}\n\n네트워크를 확인해주세요.`,
                 [{ text: '확인' }]
             );
@@ -128,7 +128,7 @@ export default function RegisterScreen({ navigation, onRegister }) {
             resizeMode="cover"
         >
             <SafeAreaView style={styles.container}>
-                <KeyboardAvoidingView 
+                <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.keyboardView}
                 >
@@ -145,8 +145,8 @@ export default function RegisterScreen({ navigation, onRegister }) {
                         {/* Logo */}
                         <View style={styles.logoContainer}>
                             <View style={styles.logoBox}>
-                                <Image 
-                                    source={require('../rrrrrr.png')} 
+                                <Image
+                                    source={require('../rrrrrr.png')}
                                     style={styles.logoImage}
                                     resizeMode="contain"
                                 />
@@ -204,7 +204,7 @@ export default function RegisterScreen({ navigation, onRegister }) {
                                 />
                             </View>
 
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.registerButton}
                                 onPress={handleRegister}
                                 disabled={loading}
@@ -214,7 +214,7 @@ export default function RegisterScreen({ navigation, onRegister }) {
                                 </Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.loginLink}
                                 onPress={() => navigation.navigate('Login')}
                             >
@@ -272,11 +272,6 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
     },
     logoImage: {
         width: '100%',
@@ -289,15 +284,10 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        alignItems: 'center',
         borderRadius: 15,
         marginBottom: 15,
         paddingHorizontal: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
     },
     inputIcon: {
         marginRight: 10,
@@ -315,11 +305,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
     },
     registerButtonText: {
         color: '#FFF',

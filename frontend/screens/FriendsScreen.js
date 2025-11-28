@@ -39,7 +39,7 @@ export default function FriendsScreen({ navigation }) {
 
     const loadFriends = async (token) => {
         try {
-            const response = await fetch(`${API_URL}/api/friends/list`, {
+            const response = await fetch(`${API_URL}/api/friends/list/`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
             if (response.ok) {
@@ -53,7 +53,7 @@ export default function FriendsScreen({ navigation }) {
 
     const loadFriendRequests = async (token) => {
         try {
-            const response = await fetch(`${API_URL}/api/friends/requests`, {
+            const response = await fetch(`${API_URL}/api/friends/requests/`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
             if (response.ok) {
@@ -74,7 +74,7 @@ export default function FriendsScreen({ navigation }) {
         setSearching(true);
         try {
             const token = await AsyncStorage.getItem('token');
-            const response = await fetch(`${API_URL}/api/friends/search?username=${encodeURIComponent(query)}`, {
+            const response = await fetch(`${API_URL}/api/friends/search/?username=${encodeURIComponent(query)}`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
             if (response.ok) {
@@ -91,7 +91,7 @@ export default function FriendsScreen({ navigation }) {
     const sendFriendRequest = async (username) => {
         try {
             const token = await AsyncStorage.getItem('token');
-            const response = await fetch(`${API_URL}/api/friends/request?friend_username=${encodeURIComponent(username)}`, {
+            const response = await fetch(`${API_URL}/api/friends/request/?friend_username=${encodeURIComponent(username)}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
             });

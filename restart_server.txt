@@ -1,0 +1,24 @@
+# 서버 재시작 명령어
+
+서버에 SSH 접속:
+ssh root@110.165.18.249
+
+다음 명령어 실행:
+
+# 1. 백엔드 디렉토리로 이동
+cd /root/twieo/backend
+
+# 2. 기존 프로세스 종료
+sudo pkill -f uvicorn
+
+# 3. 가상환경 활성화
+source venv/bin/activate
+
+# 4. 서버 재시작 (백그라운드)
+nohup python -m uvicorn main:app --host 0.0.0.0 --port 8000 > /tmp/twieo.log 2>&1 &
+
+# 5. 프로세스 확인
+ps aux | grep uvicorn
+
+# 6. 로그 확인
+tail -f /tmp/twieo.log

@@ -4,16 +4,24 @@ import os
 import folium
 import random
 import math
+import time
 from geopy.distance import distance as geopy_distance
 from geopy.point import Point
+
+# Enable OSMnx caching
+ox.settings.use_cache = True
+ox.settings.log_console = True
 
 def get_graph(lat, lon, dist_km=3.0):
     """
     Download graph centered at (lat, lon) with a given radius.
     """
     print(f"Downloading graph for point ({lat}, {lon}) with radius {dist_km}km...")
+    start_time = time.time()
     # dist is in meters
     G = ox.graph_from_point((lat, lon), dist=dist_km*1000, network_type='walk')
+    end_time = time.time()
+    print(f"Graph download/load took: {end_time - start_time:.2f} seconds")
     return G
 
 def calculate_destination(lat, lon, distance_km, bearing_degrees):
@@ -68,7 +76,10 @@ def generate_circular_route(lat, lon, target_distance_km, preference="none", fix
     # For a circular route of length L, the diameter is roughly L/pi. 
     # A radius of L/2 is safe enough.
     radius_km = (target_distance_km / 2.0) + 0.2
+    
+    graph_start_time = time.time()
     G = get_graph(lat, lon, dist_km=radius_km)
+    print(f"Total graph preparation took: {time.time() - graph_start_time:.2f} seconds")
     
     # Find nearest node to start
     start_node = ox.distance.nearest_nodes(G, lon, lat)

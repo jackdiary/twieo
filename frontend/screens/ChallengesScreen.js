@@ -11,7 +11,7 @@ export default function ChallengesScreen({ navigation }) {
     const [friends, setFriends] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
-    
+
     // 새 챌린지 입력
     const [challengeName, setChallengeName] = useState('');
     const [goalType, setGoalType] = useState('distance'); // distance, time
@@ -34,7 +34,7 @@ export default function ChallengesScreen({ navigation }) {
             const token = await AsyncStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`${API_URL}/api/challenges`, {
+            const response = await fetch(`${API_URL}/api/challenges/`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
 
@@ -52,7 +52,7 @@ export default function ChallengesScreen({ navigation }) {
             const token = await AsyncStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`${API_URL}/api/friends/list`, {
+            const response = await fetch(`${API_URL}/api/friends/list/`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
 
@@ -84,7 +84,7 @@ export default function ChallengesScreen({ navigation }) {
             const endDate = new Date();
             endDate.setDate(endDate.getDate() + parseInt(duration));
 
-            const response = await fetch(`${API_URL}/api/challenges`, {
+            const response = await fetch(`${API_URL}/api/challenges/`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -92,7 +92,7 @@ export default function ChallengesScreen({ navigation }) {
                 },
                 body: JSON.stringify({
                     name: challengeName,
-                    goal_type: goalType,
+                    challenge_type: goalType,
                     target_value: parseFloat(targetValue),
                     end_date: endDate.toISOString(),
                     participant_ids: selectedFriends,
@@ -161,7 +161,7 @@ export default function ChallengesScreen({ navigation }) {
                         <Text style={styles.challengeName}>{challenge.name}</Text>
                         <View style={styles.challengeTypeBadge}>
                             <Text style={styles.challengeTypeText}>
-                                {getGoalTypeText(challenge.goal_type)}
+                                {getGoalTypeText(challenge.challenge_type)}
                             </Text>
                         </View>
                     </View>
@@ -179,7 +179,7 @@ export default function ChallengesScreen({ navigation }) {
 
                 <View style={styles.challengeGoal}>
                     <Text style={styles.challengeGoalText}>
-                        목표: {challenge.target_value} {getGoalUnit(challenge.goal_type)}
+                        목표: {challenge.target_value} {getGoalUnit(challenge.challenge_type)}
                     </Text>
                     <Text style={styles.challengeParticipants}>
                         참가자: {challenge.participants.length}명
@@ -191,7 +191,7 @@ export default function ChallengesScreen({ navigation }) {
                         <View style={styles.myProgressHeader}>
                             <Text style={styles.myProgressLabel}>내 진행도</Text>
                             <Text style={styles.myProgressValue}>
-                                {myParticipant.current_value.toFixed(1)} / {challenge.target_value} {getGoalUnit(challenge.goal_type)}
+                                {myParticipant.current_value.toFixed(1)} / {challenge.target_value} {getGoalUnit(challenge.challenge_type)}
                             </Text>
                         </View>
                         <View style={styles.progressBar}>
@@ -224,8 +224,8 @@ export default function ChallengesScreen({ navigation }) {
                 </View>
 
                 {/* Content */}
-                <ScrollView 
-                    style={styles.content} 
+                <ScrollView
+                    style={styles.content}
                     contentContainerStyle={{ paddingBottom: 30 }}
                     showsVerticalScrollIndicator={false}
                 >

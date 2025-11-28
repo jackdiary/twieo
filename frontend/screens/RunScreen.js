@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Dimensions, ActivityIndicator, Alert, ScrollView, Platform } from 'react-native';
 import * as Location from 'expo-location';
+import * as Speech from 'expo-speech';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,7 +24,7 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // 지구 반지름 (km)
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
+    const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
@@ -47,12 +48,90 @@ export default function RunScreen() {
         calories: 0,
     });
     const [routePath, setRoutePath] = useState([]);
-    
+
     const lastLocationRef = useRef(null);
     const timerRef = useRef(null);
     const startTimeRef = useRef(null);
+    const lastAnnouncedKmRef = useRef(0);
+    const nextWaypointIndexRef = useRef(0);
 
     const distances = [1.0, 3.0, 5.0, 10.0];
+
+    // 음성 안내 함수
+    const speak = (text) => {
+        Speech.speak(text, { language: 'ko-KR', rate: 1.0 });
+    };
+
+    // 방향 계산 함수 (두 점 사이의 방위각)
+    const calculateBearing = (startLat, startLon, destLat, destLon) => {
+        const startLatRad = startLat * Math.PI / 180;
+        const startLonRad = startLon * Math.PI / 180;
+        const destLatRad = destLat * Math.PI / 180;
+        const destLonRad = destLon * Math.PI / 180;
+
+        const y = Math.sin(destLonRad - startLonRad) * Math.cos(destLatRad);
+        const x = Math.cos(startLatRad) * Math.sin(destLatRad) -
+            Math.sin(startLatRad) * Math.cos(destLatRad) * Math.cos(destLonRad - startLonRad);
+        const brng = Math.atan2(y, x) * 180 / Math.PI;
+        return (brng + 360) % 360;
+    };
+
+    const checkVoiceGuidance = (distance, pace, currentCoords) => {
+        // 1. 거리 안내 (1km 단위)
+        const currentKm = Math.floor(distance);
+        if (currentKm > lastAnnouncedKmRef.current) {
+            const paceMin = Math.floor(pace);
+            const paceSec = Math.round((pace - paceMin) * 60);
+            speak(`${currentKm}킬로미터 돌파. 현재 페이스 ${paceMin}분 ${paceSec}초입니다.`);
+            lastAnnouncedKmRef.current = currentKm;
+        }
+
+        // 2. 방향 안내 (생성된 코스가 있을 때만)
+        if (routes.length > 0 && selectedRouteIndex < routes.length) {
+            const route = routes[selectedRouteIndex].route || []; // route 구조에 따라 조정 필요
+            // route가 [{lat, lon}, ...] 형태라고 가정 (generate_course 응답 구조 확인 필요)
+            // 실제로는 selectedRoute 변수를 사용하는 것이 더 안전함 (이미 변환됨)
+
+            const targetRoute = selectedRoute; // 렌더링용으로 변환된 좌표 사용
+
+            if (targetRoute && targetRoute.length > nextWaypointIndexRef.current + 1) {
+                const nextPoint = targetRoute[nextWaypointIndexRef.current + 1];
+                const distToNext = calculateDistance(
+                    currentCoords.latitude, currentCoords.longitude,
+                    nextPoint.latitude, nextPoint.longitude
+                );
+
+                // 다음 포인트에 30m 이내로 접근하면
+                if (distToNext < 0.03) {
+                    // 그 다음 포인트가 있다면 방향 계산
+                    if (targetRoute.length > nextWaypointIndexRef.current + 2) {
+                        const nextNextPoint = targetRoute[nextWaypointIndexRef.current + 2];
+
+                        const bearing1 = calculateBearing(
+                            currentCoords.latitude, currentCoords.longitude,
+                            nextPoint.latitude, nextPoint.longitude
+                        );
+                        const bearing2 = calculateBearing(
+                            nextPoint.latitude, nextPoint.longitude,
+                            nextNextPoint.latitude, nextNextPoint.longitude
+                        );
+
+                        let turnAngle = (bearing2 - bearing1 + 360) % 360;
+                        if (turnAngle > 180) turnAngle -= 360;
+
+                        if (turnAngle > 45) {
+                            speak("잠시 후 우회전입니다.");
+                        } else if (turnAngle < -45) {
+                            speak("잠시 후 좌회전입니다.");
+                        }
+                    }
+
+                    // 웨이포인트 인덱스 증가 (지나친 것으로 간주)
+                    nextWaypointIndexRef.current += 1;
+                }
+            }
+        }
+    };
 
     useEffect(() => {
         (async () => {
@@ -80,14 +159,14 @@ export default function RunScreen() {
                     },
                     (newLocation) => {
                         setLocation(newLocation);
-                        
+
                         // 경로에 추가
                         const newCoord = {
                             latitude: newLocation.coords.latitude,
                             longitude: newLocation.coords.longitude,
                         };
                         setRoutePath(prev => [...prev, newCoord]);
-                        
+
                         // 거리 계산
                         if (lastLocationRef.current) {
                             const dist = calculateDistance(
@@ -96,13 +175,16 @@ export default function RunScreen() {
                                 newLocation.coords.latitude,
                                 newLocation.coords.longitude
                             );
-                            
+
                             setRunStats(prev => {
                                 const newDistance = prev.distance + dist;
                                 const newTime = prev.time;
                                 const newPace = newDistance > 0 ? (newTime / 60) / newDistance : 0;
                                 const newCalories = newDistance * 65; // 대략적인 칼로리 계산
-                                
+
+                                // 음성 안내 체크
+                                checkVoiceGuidance(newDistance, newPace, newLocation.coords);
+
                                 return {
                                     distance: newDistance,
                                     time: newTime,
@@ -111,7 +193,7 @@ export default function RunScreen() {
                                 };
                             });
                         }
-                        
+
                         lastLocationRef.current = newCoord;
                     }
                 );
@@ -156,7 +238,8 @@ export default function RunScreen() {
         if (!location) return;
         setLoading(true);
         try {
-            const response = await fetch('http://192.168.219.42:8000/generate_course', {
+            console.log('코스 생성 요청:', `${API_URL}/generate_course`);
+            const response = await fetch(`${API_URL}/generate_course`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -170,9 +253,12 @@ export default function RunScreen() {
             });
 
             const data = await response.json();
+            console.log('서버 응답 데이터:', JSON.stringify(data, null, 2));
 
             if (data.status === 'success') {
                 if (data.routes && data.routes.length > 0) {
+                    console.log('생성된 코스 개수:', data.routes.length);
+                    console.log('첫 번째 코스:', data.routes[0]);
                     setRoutes(data.routes);
                     setSelectedRouteIndex(0);
                     Alert.alert('성공! 🎉', `${data.routes.length}개의 ${selectedDistance}km 코스가 생성되었습니다.`);
@@ -200,6 +286,9 @@ export default function RunScreen() {
             longitude: location.coords.longitude,
         } : null;
         startTimeRef.current = Date.now();
+        lastAnnouncedKmRef.current = 0;
+        nextWaypointIndexRef.current = 0;
+        speak("러닝을 시작합니다. 안전하게 달리세요!");
     };
 
     const pauseRunning = () => {
@@ -242,7 +331,7 @@ export default function RunScreen() {
                 return;
             }
 
-            const response = await fetch(`${API_URL}/api/runs`, {
+            const response = await fetch(`${API_URL}/api/runs/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -268,7 +357,22 @@ export default function RunScreen() {
         }
     };
 
-    const selectedRoute = routes[selectedRouteIndex]?.route || [];
+    // waypoints를 MapView가 사용할 수 있는 형식으로 변환
+    const selectedRoute = routes[selectedRouteIndex]?.waypoints?.map(wp => ({
+        latitude: wp.lat,
+        longitude: wp.lon
+    })) || routes[selectedRouteIndex]?.route || [];
+
+    // 디버깅: 선택된 경로 확인
+    if (routes.length > 0) {
+        console.log('전체 코스 개수:', routes.length);
+        console.log('선택된 인덱스:', selectedRouteIndex);
+        console.log('선택된 코스 데이터:', routes[selectedRouteIndex]);
+        console.log('선택된 경로 좌표 개수:', selectedRoute.length);
+        if (selectedRoute.length > 0) {
+            console.log('첫 번째 좌표:', selectedRoute[0]);
+        }
+    }
 
     return (
         <View style={styles.container}>
@@ -296,18 +400,22 @@ export default function RunScreen() {
                         showsUserLocation={true}
                         followsUserLocation={isRunning}
                     >
-                        {/* 생성된 코스 표시 */}
-                        {selectedRoute.length > 0 && !isRunning && (
+                        {/* 생성된 코스 표시 (러닝 중에도 표시, 회색으로) */}
+                        {selectedRoute.length > 0 && (
                             <>
                                 <Polyline
                                     coordinates={selectedRoute}
-                                    strokeColor="#FF6B6B"
-                                    strokeWidth={6}
+                                    strokeColor="#004288" // 회색으로 변경하여 실제 경로와 구분
+                                    strokeWidth={5}
+                                    lineDashPattern={[10, 5]} // 점선 효과
                                 />
-                                <Marker coordinate={selectedRoute[0]} title="출발! 🚩" />
+                                <Marker coordinate={selectedRoute[0]} title="출발점 🚩" />
+                                {selectedRoute.length > 1 && (
+                                    <Marker coordinate={selectedRoute[selectedRoute.length - 1]} title="도착점 🏁" pinColor="blue" />
+                                )}
                             </>
                         )}
-                        
+
                         {/* 실제 러닝 경로 표시 */}
                         {routePath.length > 0 && isRunning && (
                             <>
@@ -368,7 +476,7 @@ export default function RunScreen() {
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.routeSelector}>
                             {routes.map((routeOption, index) => (
                                 <TouchableOpacity
-                                    key={routeOption.id}
+                                    key={`route-${index}`}
                                     style={[
                                         styles.routeOption,
                                         selectedRouteIndex === index && styles.routeOptionSelected
@@ -378,7 +486,7 @@ export default function RunScreen() {
                                     <Text style={[
                                         styles.routeOptionText,
                                         selectedRouteIndex === index && styles.routeOptionTextSelected
-                                    ]}>코스 {routeOption.id}</Text>
+                                    ]}>코스 {index + 1}</Text>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
@@ -497,11 +605,6 @@ const styles = StyleSheet.create({
         padding: 20,
         borderRadius: 15,
         backgroundColor: 'rgba(0, 0, 0, 0.25)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
     },
     statsRow: {
         flexDirection: 'row',
@@ -536,49 +639,40 @@ const styles = StyleSheet.create({
         maxHeight: 60,
     },
     routeOption: {
-        backgroundColor: 'rgba(0, 0, 0, 0.25)',
         paddingHorizontal: 20,
         paddingVertical: 12,
         borderRadius: 15,
         marginRight: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
     },
     routeOptionSelected: {
         backgroundColor: '#FF6B6B',
     },
     routeOptionText: {
-        color: '#FF6B6B',
+        color: '#000000ff',
         fontWeight: 'bold',
     },
     routeOptionTextSelected: {
         color: '#FFF',
     },
     distanceSelector: {
-        marginBottom: 15,
-        paddingHorizontal: 20,
-        maxHeight: 50,
+        backgroundColor: '#d82020ff',
+        marginBottom: 1,
+        paddingHorizontal: 2,
+        borderRadius: 15,
+        margin: 10,
     },
     distancePill: {
-        backgroundColor: 'rgba(0, 0, 0, 0.25)',
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 15,
         marginRight: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
     },
     distancePillSelected: {
-        backgroundColor: '#FF6B6B',
+        backgroundColor: '#d82020ff',
     },
     distanceText: {
-        color: '#FF6B6B',
+
+        color: '#000000ff',
         fontWeight: 'bold',
     },
     distanceTextSelected: {
@@ -588,15 +682,9 @@ const styles = StyleSheet.create({
         width: '90%',
         padding: 15,
         borderRadius: 15,
-        backgroundColor: 'rgba(0, 0, 0, 0.25)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
     },
     button: {
-        backgroundColor: '#FF6B6B',
+        backgroundColor: '#493edfff',
         paddingVertical: 16,
         borderRadius: 20,
         flexDirection: 'row',
@@ -629,7 +717,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.4,
         shadowRadius: 12,
         elevation: 8,
-        borderWidth: 3,
+        borderWidth: 1,
         borderColor: '#FFF',
     },
     runButtonInner: {

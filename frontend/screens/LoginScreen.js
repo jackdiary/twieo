@@ -22,7 +22,7 @@ export default function LoginScreen({ navigation, onLogin }) {
             formData.append('username', email);
             formData.append('password', password);
 
-            const response = await fetch(`${API_URL}/api/auth/login`, {
+            const response = await fetch(`${API_URL}/api/auth/login/`, {
                 method: 'POST',
                 body: formData,
             });
@@ -33,15 +33,15 @@ export default function LoginScreen({ navigation, onLogin }) {
                 // 토큰 저장
                 await AsyncStorage.setItem('token', data.access_token);
                 await AsyncStorage.setItem('userEmail', email);
-                
+
                 // 사용자 정보 가져오기
                 try {
-                    const userResponse = await fetch(`${API_URL}/api/users/me`, {
+                    const userResponse = await fetch(`${API_URL}/api/auth/users/me`, {
                         headers: {
                             'Authorization': `Bearer ${data.access_token}`,
                         },
                     });
-                    
+
                     if (userResponse.ok) {
                         const userData = await userResponse.json();
                         await AsyncStorage.setItem('username', userData.username);
@@ -49,9 +49,9 @@ export default function LoginScreen({ navigation, onLogin }) {
                 } catch (err) {
                     console.log('Username 저장 실패:', err);
                 }
-                
+
                 Alert.alert('성공', '로그인되었습니다!');
-                
+
                 // 로그인 상태 업데이트
                 if (onLogin) {
                     onLogin();
@@ -74,7 +74,7 @@ export default function LoginScreen({ navigation, onLogin }) {
             resizeMode="cover"
         >
             <SafeAreaView style={styles.container}>
-                <KeyboardAvoidingView 
+                <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.keyboardView}
                 >
@@ -82,8 +82,8 @@ export default function LoginScreen({ navigation, onLogin }) {
                         {/* Logo */}
                         <View style={styles.logoContainer}>
                             <View style={styles.logoBox}>
-                                <Image 
-                                    source={require('../rrrrrr.png')} 
+                                <Image
+                                    source={require('../rrrrrr.png')}
                                     style={styles.logoImage}
                                     resizeMode="contain"
                                 />
@@ -119,7 +119,7 @@ export default function LoginScreen({ navigation, onLogin }) {
                                 />
                             </View>
 
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.loginButton}
                                 onPress={handleLogin}
                                 disabled={loading}
@@ -129,7 +129,7 @@ export default function LoginScreen({ navigation, onLogin }) {
                                 </Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.registerButton}
                                 onPress={() => navigation.navigate('Register')}
                             >
@@ -173,11 +173,6 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
     },
     logoImage: {
         width: '100%',
@@ -205,24 +200,25 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        alignItems: 'center',
         borderRadius: 15,
         marginBottom: 15,
         paddingHorizontal: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
     },
     inputIcon: {
-        marginRight: 10,
+
+        marginRight: 15,
+        borderColor: '#FFF',
+
     },
     input: {
         flex: 1,
         height: 50,
         color: '#FFF',
         fontSize: 16,
+        borderColor: '#FFF',
+        borderWidth: 1,
+        borderRadius: 15,
     },
     loginButton: {
         backgroundColor: '#FF6B6B',
@@ -231,11 +227,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
     },
     loginButtonText: {
         color: '#FFF',

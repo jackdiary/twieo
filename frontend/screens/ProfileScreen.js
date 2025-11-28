@@ -1,5 +1,6 @@
-import { useState, useEffect, useContext } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator, Modal, TextInput } from 'react-native';
+import { useState, useEffect, useContext, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator, Modal, TextInput, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -33,9 +34,11 @@ export default function ProfileScreen({ navigation }) {
         { id: 4, title: '도움말', icon: 'help-circle-outline', screen: 'Help' },
     ];
 
-    useEffect(() => {
-        loadAllData();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            loadAllData();
+        }, [])
+    );
 
     const loadAllData = async () => {
         setLoading(true);
@@ -50,21 +53,21 @@ export default function ProfileScreen({ navigation }) {
     const loadProfile = async () => {
         try {
             const token = await AsyncStorage.getItem('token');
-            if (!token) return;
+            if (!token) {
+                // 토큰이 없으면 기본값 사용
+                console.log('토큰이 없습니다. 로그인이 필요합니다.');
+                return;
+            }
 
-            const response = await fetch(`${API_URL}/api/profile`, {
+            const response = await fetch(`${API_URL}/api/profile/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
             });
 
             if (response.status === 401) {
-                // 토큰이 만료되었거나 유효하지 않음 - 자동 로그아웃
-                await AsyncStorage.removeItem('token');
-                await AsyncStorage.removeItem('userEmail');
-                if (contextLogout) {
-                    contextLogout();
-                }
+                // 토큰이 만료되었거나 유효하지 않음 - 조용히 처리
+                console.log('토큰이 만료되었습니다. 로그인이 필요합니다.');
                 return;
             }
 
@@ -115,7 +118,7 @@ export default function ProfileScreen({ navigation }) {
             const token = await AsyncStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`${API_URL}/api/profile`, {
+            const response = await fetch(`${API_URL}/api/profile/`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -141,7 +144,7 @@ export default function ProfileScreen({ navigation }) {
             const token = await AsyncStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`${API_URL}/api/achievements`, {
+            const response = await fetch(`${API_URL}/api/achievements/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -169,7 +172,7 @@ export default function ProfileScreen({ navigation }) {
             const token = await AsyncStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`${API_URL}/api/goals`, {
+            const response = await fetch(`${API_URL}/api/goals/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -234,7 +237,7 @@ export default function ProfileScreen({ navigation }) {
     const pickImage = async () => {
         // 권한 요청
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        
+
         if (status !== 'granted') {
             Alert.alert('권한 필요', '사진 라이브러리 접근 권한이 필요합니다.');
             return;
@@ -257,7 +260,7 @@ export default function ProfileScreen({ navigation }) {
         try {
             setUploading(true);
             const token = await AsyncStorage.getItem('token');
-            
+
             if (!token) {
                 Alert.alert('오류', '로그인이 필요합니다.');
                 return;
@@ -265,35 +268,74 @@ export default function ProfileScreen({ navigation }) {
 
             // FormData 생성
             const formData = new FormData();
-            const filename = uri.split('/').pop();
-            const match = /\.(\w+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-            formData.append('file', {
-                uri,
-                name: filename,
-                type,
-            });
+            // 웹 환경에서는 Blob으로 변환
+            if (Platform.OS === 'web') {
+                const response = await fetch(uri);
+                const blob = await response.blob();
 
-            const response = await fetch(`${API_URL}/api/profile/avatar`, {
+                // Blob 타입에서 확장자 추출
+                let extension = 'jpg';
+                if (blob.type) {
+                    const typeMatch = blob.type.match(/image\/(\w+)/);
+                    if (typeMatch) {
+                        extension = typeMatch[1];
+                        // jpeg를 jpg로 변환
+                        if (extension === 'jpeg') extension = 'jpg';
+                    }
+                }
+
+                // 파일명 생성 (확장자 포함)
+                const filename = `avatar_${Date.now()}.${extension}`;
+
+                // 파일 이름과 타입을 명시적으로 설정
+                const file = new File([blob], filename, { type: blob.type || `image/${extension}` });
+                formData.append('file', file);
+
+                console.log('업로드 시작 (웹):', filename, blob.type, `크기: ${blob.size} bytes`);
+            } else {
+                // 모바일 환경
+                const filename = uri.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+                formData.append('file', {
+                    uri,
+                    name: filename,
+                    type,
+                });
+
+                console.log('업로드 시작 (모바일):', filename, type);
+            }
+
+            const response = await fetch(`${API_URL}/api/profile/avatar/`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
+                    // Content-Type은 FormData가 자동으로 설정하므로 제거
                 },
                 body: formData,
             });
+
+            console.log('응답 상태:', response.status);
 
             if (response.ok) {
                 const data = await response.json();
                 setAvatarUrl(`${API_URL}${data.avatar_url}`);
                 Alert.alert('성공', '프로필 사진이 업데이트되었습니다.');
             } else {
-                const error = await response.json();
-                Alert.alert('오류', error.detail || '업로드에 실패했습니다.');
+                const errorText = await response.text();
+                console.error('업로드 에러:', errorText);
+                try {
+                    const error = JSON.parse(errorText);
+                    Alert.alert('오류', error.detail || '업로드에 실패했습니다.');
+                } catch {
+                    Alert.alert('오류', `업로드에 실패했습니다. (${response.status})`);
+                }
             }
         } catch (error) {
             console.error('업로드 실패:', error);
-            Alert.alert('오류', '업로드 중 문제가 발생했습니다.');
+            Alert.alert('오류', '업로드 중 문제가 발생했습니다: ' + error.message);
         } finally {
             setUploading(false);
         }
@@ -384,7 +426,7 @@ export default function ProfileScreen({ navigation }) {
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Profile Header */}
                 <View style={styles.profileHeader}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.avatarContainer}
                         onPress={pickImage}
                         disabled={uploading}
@@ -479,7 +521,7 @@ export default function ProfileScreen({ navigation }) {
                         </TouchableOpacity>
                     </View>
                     {achievements.length === 0 ? (
-                        <Text style={styles.emptyText}>업적을 불러오는 중...</Text>
+                        <Text style={styles.emptyText}>아직 달성한 업적이 없습니다</Text>
                     ) : (
                         <View style={styles.achievementsGrid}>
                             {achievements.map((achievement) => (
@@ -519,8 +561,8 @@ export default function ProfileScreen({ navigation }) {
                 {/* Menu */}
                 <View style={styles.section}>
                     {menuItems.map((item) => (
-                        <TouchableOpacity 
-                            key={item.id} 
+                        <TouchableOpacity
+                            key={item.id}
                             style={styles.menuItem}
                             onPress={() => item.screen && navigation.navigate(item.screen)}
                         >
@@ -551,11 +593,8 @@ const styles = StyleSheet.create({
         padding: 30,
         marginBottom: 10,
         borderRadius: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
+        borderColor: 'rgba(0, 0, 0, 0.5)',
+        borderWidth: 1,
     },
     avatarContainer: {
         position: 'relative',
@@ -637,21 +676,18 @@ const styles = StyleSheet.create({
     statsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        padding: 10,
-        marginBottom: 10,
+        justifyContent: 'space-between',
+        marginBottom: 20,
     },
     statCard: {
         width: '48%',
         backgroundColor: 'rgba(255, 255, 255, 0.15)',
         padding: 20,
-        margin: '1%',
+        marginBottom: 15,
         borderRadius: 15,
+        borderColor: 'rgba(0, 0, 0, 0.5)',
+        borderWidth: 1,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
     },
     statValue: {
         fontSize: 24,
@@ -669,11 +705,8 @@ const styles = StyleSheet.create({
         padding: 20,
         marginBottom: 10,
         borderRadius: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
+        borderColor: 'rgba(0, 0, 0, 0.5)',
+        borderWidth: 1,
     },
     sectionTitle: {
         fontSize: 18,
@@ -756,11 +789,8 @@ const styles = StyleSheet.create({
         margin: 20,
         borderRadius: 15,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
+        borderColor: 'rgba(0, 0, 0, 0.5)',
+        borderWidth: 1,
     },
     logoutText: {
         fontSize: 16,

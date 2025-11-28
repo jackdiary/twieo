@@ -4,9 +4,9 @@ import Constants from 'expo-constants';
 
 // 환경별 API URL 설정
 const API_CONFIG = {
-    // 프로덕션 환경 (실제 배포 시 변경)
+    // 프로덕션 환경 (네이버 클라우드 서버)
     production: {
-        apiUrl: 'https://api.twieo.shop',  // 실제 API 도메인으로 변경
+        apiUrl: 'http://110.165.18.249:8000',  // 네이버 클라우드 서버
     },
     // 개발 환경
     development: {
@@ -14,48 +14,34 @@ const API_CONFIG = {
     }
 };
 
-// API 설정 - 환경과 플랫폼에 따라 자동으로 URL 설정
+// API 설정 - 모든 환경에서 프로덕션 서버 사용 (임시)
 const getApiUrl = () => {
-    // 프로덕션 환경 체크 (앱 빌드 시)
-    const isProduction = Constants.expoConfig?.extra?.environment === 'production' 
-        || __DEV__ === false;
+    console.log('🌐 Using production API for all platforms');
+    console.log('Platform:', Platform.OS);
+    console.log('DEV mode:', __DEV__);
     
-    if (isProduction) {
-        console.log('🚀 Production mode - Using production API');
-        return API_CONFIG.production.apiUrl;
-    }
-    
-    // 개발 환경
-    console.log('🔧 Development mode');
-    
-    // 웹 환경
-    if (Platform.OS === 'web') {
-        return 'http://localhost:8000';
-    }
-    
-    // 모바일 환경 - Expo의 호스트 IP 자동 감지
-    try {
-        const debuggerHost = Constants.expoConfig?.hostUri 
-            || Constants.manifest2?.extra?.expoGo?.debuggerHost
-            || Constants.manifest?.debuggerHost;
-        
-        if (debuggerHost) {
-            const host = debuggerHost.split(':')[0];
-            console.log('📱 Detected host:', host);
-            return `http://${host}:8000`;
-        }
-    } catch (error) {
-        console.error('Error detecting host:', error);
-    }
-    
-    // 기본값 - 설정된 IP 주소 사용
-    console.warn('⚠️  Using fallback IP address');
-    return `http://${API_CONFIG.development.fallbackIp}:8000`;
+    // 모든 환경에서 프로덕션 서버 사용
+    return API_CONFIG.production.apiUrl;
 };
 
 export const API_URL = getApiUrl();
 
-console.log('🌐 API URL:', API_URL);
+console.log('='.repeat(50));
+console.log('🌐 API Configuration');
+console.log('Platform:', Platform.OS);
+console.log('__DEV__:', __DEV__);
+console.log('API URL:', API_URL);
+console.log('='.repeat(50));
+
+// 서버 연결 테스트
+fetch(`${API_URL}/docs`)
+    .then(response => {
+        console.log('✅ 서버 연결 성공:', response.status);
+    })
+    .catch(error => {
+        console.error('❌ 서버 연결 실패:', error.message);
+        console.error('서버 URL 확인:', API_URL);
+    });
 
 // API 헬퍼 함수
 export const apiRequest = async (endpoint, options = {}) => {

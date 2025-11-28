@@ -28,13 +28,13 @@ export default function HistoryScreen() {
         try {
             setLoading(true);
             const token = await AsyncStorage.getItem('token');
-            
+
             if (!token) {
                 setLoading(false);
                 return;
             }
 
-            const response = await fetch(`${API_URL}/api/runs`, {
+            const response = await fetch(`${API_URL}/api/runs/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -61,7 +61,7 @@ export default function HistoryScreen() {
     const calculateStats = () => {
         const now = new Date();
         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        
+
         const weeklyRuns = runHistory.filter(run => {
             const runDate = new Date(run.date);
             return runDate >= weekAgo;
@@ -69,8 +69,8 @@ export default function HistoryScreen() {
 
         const totalDistance = weeklyRuns.reduce((sum, run) => sum + run.distance, 0);
         const totalTime = weeklyRuns.reduce((sum, run) => sum + run.duration, 0);
-        const avgPace = weeklyRuns.length > 0 
-            ? weeklyRuns.reduce((sum, run) => sum + run.pace, 0) / weeklyRuns.length 
+        const avgPace = weeklyRuns.length > 0
+            ? weeklyRuns.reduce((sum, run) => sum + run.pace, 0) / weeklyRuns.length
             : 0;
 
         return {
@@ -176,8 +176,8 @@ export default function HistoryScreen() {
             </View>
 
             {/* Run History List */}
-            <ScrollView 
-                style={styles.historyList} 
+            <ScrollView
+                style={styles.historyList}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -202,7 +202,7 @@ export default function HistoryScreen() {
                             month: 'long',
                             day: 'numeric',
                         });
-                        
+
                         return (
                             <TouchableOpacity key={run.id} style={styles.historyItem}>
                                 <View style={styles.historyIcon}>
@@ -242,11 +242,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
+        borderColor: 'rgba(0, 0, 0, 0.5)',
+        borderWidth: 1,
+        borderRadius: 15,
+        marginBottom: 10,
     },
     headerTitle: {
         fontSize: 24,
@@ -254,20 +253,21 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     calendarContainer: {
-        backgroundColor: '#FFF',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
         marginBottom: 10,
         padding: 10,
+        borderRadius: 15,
+        borderColor: 'rgba(0, 0, 0, 0.5)',
+        borderWidth: 1,
     },
     periodSelector: {
         flexDirection: 'row',
         padding: 20,
         backgroundColor: 'rgba(255, 255, 255, 0.15)',
         marginBottom: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
+        borderRadius: 15,
+        borderColor: 'rgba(0, 0, 0, 0.5)',
+        borderWidth: 1,
     },
     periodButton: {
         flex: 1,
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderRadius: 15,
         marginHorizontal: 5,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
     },
     periodButtonActive: {
         backgroundColor: '#FF6B6B',
@@ -293,11 +293,8 @@ const styles = StyleSheet.create({
         padding: 20,
         marginBottom: 10,
         borderRadius: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
+        borderColor: 'rgba(0, 0, 0, 0.5)',
+        borderWidth: 1,
     },
     summaryTitle: {
         fontSize: 18,
@@ -331,11 +328,8 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
-        padding: 20,
-        paddingBottom: 10,
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        borderTopLeftRadius: 15,
-        borderTopRightRadius: 15,
+        paddingHorizontal: 20,
+        paddingVertical: 15,
     },
     historyItem: {
         flexDirection: 'row',
@@ -344,11 +338,8 @@ const styles = StyleSheet.create({
         padding: 15,
         marginBottom: 10,
         borderRadius: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
+        borderColor: 'rgba(0, 0, 0, 0.5)',
+        borderWidth: 1,
         marginHorizontal: 10,
     },
     historyIcon: {
@@ -411,6 +402,8 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.15)',
         margin: 20,
         borderRadius: 15,
+        borderColor: 'rgba(0, 0, 0, 0.5)',
+        borderWidth: 1,
     },
     emptyText: {
         fontSize: 18,

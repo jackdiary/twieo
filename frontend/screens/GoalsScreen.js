@@ -26,12 +26,22 @@ export default function GoalsScreen({ navigation }) {
         setLoading(true);
         try {
             const token = await AsyncStorage.getItem('token');
-            if (!token) return;
+            if (!token) {
+                console.log('토큰이 없습니다. 로그인이 필요합니다.');
+                setLoading(false);
+                return;
+            }
 
-            const endpoint = activeTab === 'active' ? '/api/goals' : '/api/goals/completed';
+            const endpoint = activeTab === 'active' ? '/api/goals/' : '/api/goals/completed/';
             const response = await fetch(`${API_URL}${endpoint}`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
+
+            if (response.status === 401) {
+                console.log('토큰이 만료되었습니다. 로그인이 필요합니다.');
+                setLoading(false);
+                return;
+            }
 
             if (response.ok) {
                 const data = await response.json();
@@ -56,7 +66,7 @@ export default function GoalsScreen({ navigation }) {
 
         try {
             const token = await AsyncStorage.getItem('token');
-            const response = await fetch(`${API_URL}/api/goals`, {
+            const response = await fetch(`${API_URL}/api/goals/`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

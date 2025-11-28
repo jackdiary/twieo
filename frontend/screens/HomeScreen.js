@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { StyleSheet, Text, View, ImageBackground, TouchableOpacity, ScrollView, Dimensions, ActivityIndicator, Alert, Modal, Linking, Platform } from 'react-native';
+import { StyleSheet, Text, View, ImageBackground, TouchableOpacity, ScrollView, Dimensions, ActivityIndicator, Alert, Modal, Linking, Platform, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -9,9 +9,30 @@ import { API_URL } from '../config/api';
 
 const { width } = Dimensions.get('window');
 
+// 플랫폼별 그림자 스타일 헬퍼
+const getShadow = (elevation = 2) => Platform.select({
+    ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: elevation },
+        shadowOpacity: 0.15,
+        shadowRadius: elevation * 2,
+    },
+    android: {
+        // 안드로이드에서는 그림자 없이 배경색만으로 구분
+    },
+});
+
 export default function HomeScreen({ navigation }) {
     const { handleLogout } = useContext(AuthContext);
     const [username, setUsername] = useState('러너');
+
+    // 플랫폼 확인
+    useEffect(() => {
+        console.log('='.repeat(50));
+        console.log('HomeScreen Platform:', Platform.OS);
+        console.log('Platform Version:', Platform.Version);
+        console.log('='.repeat(50));
+    }, []);
     const [stats, setStats] = useState({
         totalRuns: 0,
         totalDistance: 0,
@@ -32,21 +53,32 @@ export default function HomeScreen({ navigation }) {
     }, []);
 
     useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
+        const unsubscribe = navigation.addListener('focus', async () => {
             // 홈 화면에 포커스될 때마다 데이터 새로고침
-            loadProfile();
-            loadAchievements();
+            const token = await AsyncStorage.getItem('token');
+            if (token) {
+                loadProfile();
+                loadAchievements();
+            }
         });
 
         return unsubscribe;
     }, [navigation]);
 
     const loadData = async () => {
-        await Promise.all([
-            loadProfile(),
-            loadLocation(),
-            loadAchievements(),
-        ]);
+        // 토큰 확인 - 없으면 인증 관련 API 호출 안 함
+        const token = await AsyncStorage.getItem('token');
+
+        if (token) {
+            await Promise.all([
+                loadProfile(),
+                loadLocation(),
+                loadAchievements(),
+            ]);
+        } else {
+            // 토큰이 없으면 위치와 날씨만 로드
+            await loadLocation();
+        }
         setLoading(false);
     };
 
@@ -69,34 +101,34 @@ export default function HomeScreen({ navigation }) {
 
         const origin = `${location.coords.latitude},${location.coords.longitude}`;
         const destination = `${facility.latitude},${facility.longitude}`;
-        
+
         const scheme = Platform.select({
             ios: 'maps:0,0?q=',
             android: 'geo:0,0?q='
         });
-        
+
         const latLng = `${facility.latitude},${facility.longitude}`;
         const label = facility.name;
-        
+
         // 구글 맵 URL (웹/앱 모두 지원)
         const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=walking`;
-        
+
         // 카카오맵 URL
         const kakaoMapUrl = `kakaomap://route?sp=${location.coords.latitude},${location.coords.longitude}&ep=${facility.latitude},${facility.longitude}&by=FOOT`;
-        
+
         Alert.alert(
             '지도 앱 선택',
             '어떤 지도 앱으로 길찾기를 하시겠습니까?',
             [
                 {
                     text: '구글 맵',
-                    onPress: () => Linking.openURL(googleMapsUrl).catch(() => 
+                    onPress: () => Linking.openURL(googleMapsUrl).catch(() =>
                         Alert.alert('오류', '구글 맵을 열 수 없습니다.')
                     )
                 },
                 {
                     text: '카카오맵',
-                    onPress: () => Linking.openURL(kakaoMapUrl).catch(() => 
+                    onPress: () => Linking.openURL(kakaoMapUrl).catch(() =>
                         Alert.alert('오류', '카카오맵을 열 수 없습니다. 앱이 설치되어 있는지 확인해주세요.')
                     )
                 },
@@ -111,21 +143,24 @@ export default function HomeScreen({ navigation }) {
     const loadProfile = async () => {
         try {
             const token = await AsyncStorage.getItem('token');
-            if (!token) return;
+            if (!token) {
+                // 토큰이 없으면 기본값 사용
+                const savedUsername = await AsyncStorage.getItem('username');
+                if (savedUsername) {
+                    setUsername(savedUsername);
+                }
+                return;
+            }
 
-            const response = await fetch(`${API_URL}/api/profile`, {
+            const response = await fetch(`${API_URL}/api/profile/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
             });
 
             if (response.status === 401) {
-                // 토큰이 만료되었거나 유효하지 않음 - 자동 로그아웃
-                await AsyncStorage.removeItem('token');
-                await AsyncStorage.removeItem('userEmail');
-                if (handleLogout) {
-                    handleLogout();
-                }
+                // 토큰이 만료되었거나 유효하지 않음 - 조용히 처리
+                console.log('토큰이 만료되었습니다. 로그인이 필요합니다.');
                 return;
             }
 
@@ -137,7 +172,7 @@ export default function HomeScreen({ navigation }) {
                     totalTime: 0, // 백엔드에 추가 필요
                     avgPace: data.best_pace || 0,
                 });
-                
+
                 // 사용자 이름 가져오기 (AsyncStorage에 저장된 username 사용)
                 const savedUsername = await AsyncStorage.getItem('username');
                 if (savedUsername) {
@@ -164,11 +199,11 @@ export default function HomeScreen({ navigation }) {
 
     const loadWeather = async (lat, lon) => {
         try {
-            const response = await fetch(`${API_URL}/api/weather?lat=${lat}&lon=${lon}`);
+            const response = await fetch(`${API_URL}/api/weather/?lat=${lat}&lon=${lon}`);
             if (response.ok) {
                 const data = await response.json();
                 setWeather(data);
-                
+
                 // 날씨가 나쁘면 실내 시설 로드
                 if (!data.is_good_for_running) {
                     await loadFacilities(lat, lon);
@@ -181,7 +216,7 @@ export default function HomeScreen({ navigation }) {
 
     const loadFacilities = async (lat, lon) => {
         try {
-            const response = await fetch(`${API_URL}/api/facilities/indoor?lat=${lat}&lon=${lon}&weather_condition=bad`);
+            const response = await fetch(`${API_URL}/api/facilities/indoor/?lat=${lat}&lon=${lon}&weather_condition=bad`);
             if (response.ok) {
                 const data = await response.json();
                 setFacilities(data.facilities || []);
@@ -196,9 +231,15 @@ export default function HomeScreen({ navigation }) {
             const token = await AsyncStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`${API_URL}/api/achievements`, {
+            const response = await fetch(`${API_URL}/api/achievements/`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
+
+            if (response.status === 401) {
+                // 토큰이 만료되었거나 유효하지 않음 - 조용히 처리
+                console.log('토큰이 만료되었습니다. 로그인이 필요합니다.');
+                return;
+            }
 
             if (response.ok) {
                 const data = await response.json();
@@ -254,8 +295,8 @@ export default function HomeScreen({ navigation }) {
                 '현재 날씨가 좋습니다!\n실외에서 러닝하기 좋은 날씨입니다. 🏃‍♂️\n\n그래도 실내 시설을 확인하시겠습니까?',
                 [
                     { text: '취소', style: 'cancel' },
-                    { 
-                        text: '시설 보기', 
+                    {
+                        text: '시설 보기',
                         onPress: async () => {
                             try {
                                 const response = await fetch(
@@ -317,7 +358,15 @@ export default function HomeScreen({ navigation }) {
             source={require('../aa.jpg')}
             style={styles.background}
             resizeMode="cover"
+            imageStyle={{ opacity: Platform.OS === 'android' ? 1 : 1 }}
+            onLoad={() => console.log('✅ 배경 이미지 로드 성공')}
+            onError={(error) => console.error('❌ 배경 이미지 로드 실패:', error)}
         >
+            <StatusBar
+                barStyle="light-content"
+                backgroundColor="transparent"
+                translucent={Platform.OS === 'android'}
+            />
             <SafeAreaView style={styles.container} edges={['top']}>
                 {/* Facility Recommendation Modal */}
                 <Modal
@@ -348,7 +397,7 @@ export default function HomeScreen({ navigation }) {
                                             <Text style={styles.courseDistance}>{facility.distance ? `${facility.distance.toFixed(1)}km` : '거리 정보 없음'}</Text>
                                             <Text style={styles.courseDescription}>{facility.address || '주소 정보 없음'}</Text>
                                         </View>
-                                        <TouchableOpacity 
+                                        <TouchableOpacity
                                             style={styles.mapButton}
                                             onPress={() => openMapDirections(facility)}
                                         >
@@ -367,7 +416,7 @@ export default function HomeScreen({ navigation }) {
                         <Text style={styles.greeting}>안녕하세요!</Text>
                         <Text style={styles.username}>{username}님</Text>
                     </View>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.settingsButton}
                         onPress={() => navigation.navigate('Settings')}
                     >
@@ -377,7 +426,8 @@ export default function HomeScreen({ navigation }) {
 
                 <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                     {/* Stats Card */}
-                    <View style={styles.statsCard}>
+                    {/* Stats Card */}
+                    <View style={[styles.card, styles.statsCard]}>
                         <Text style={styles.sectionTitle}>이번 달 통계</Text>
                         <View style={styles.statsGrid}>
                             <View style={styles.statItem}>
@@ -404,27 +454,28 @@ export default function HomeScreen({ navigation }) {
                     </View>
 
                     {/* Weather Card */}
+                    {/* Weather Card */}
                     {weather && (
-                        <View style={styles.weatherCard}>
+                        <View style={[styles.card, styles.weatherCard]}>
                             <View style={styles.weatherHeader}>
                                 <Text style={styles.sectionTitle}>오늘의 날씨</Text>
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     onPress={refreshWeather}
                                     disabled={refreshingWeather}
                                     style={styles.refreshButton}
                                 >
-                                    <Ionicons 
-                                        name="refresh" 
-                                        size={24} 
-                                        color={refreshingWeather ? '#999' : '#FFF'} 
+                                    <Ionicons
+                                        name="refresh"
+                                        size={24}
+                                        color={refreshingWeather ? '#999' : '#FFF'}
                                     />
                                 </TouchableOpacity>
                             </View>
                             <View style={styles.weatherContent}>
-                                <Ionicons 
-                                    name={weather.is_good_for_running ? 'sunny' : 'rainy'} 
-                                    size={48} 
-                                    color={weather.is_good_for_running ? '#FFD700' : '#666'} 
+                                <Ionicons
+                                    name={weather.is_good_for_running ? 'sunny' : 'rainy'}
+                                    size={48}
+                                    color={weather.is_good_for_running ? '#FFD700' : '#666'}
                                 />
                                 <View style={styles.weatherInfo}>
                                     <Text style={styles.weatherTemp}>{weather.temperature}°C</Text>
@@ -456,7 +507,7 @@ export default function HomeScreen({ navigation }) {
                         {quickActions.map((action) => (
                             <TouchableOpacity
                                 key={action.id}
-                                style={styles.quickAction}
+                                style={[styles.card, styles.quickActionsCard]}
                                 onPress={action.action}
                             >
                                 <View style={styles.quickActionBlur}>
@@ -472,7 +523,7 @@ export default function HomeScreen({ navigation }) {
 
                     {/* Achievements */}
                     {achievements.length > 0 && (
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.achievementsCard}
                             onPress={() => navigation.navigate('Achievements')}
                         >
@@ -527,23 +578,20 @@ const styles = StyleSheet.create({
         flex: 1,
         width: '100%',
         height: '100%',
+        backgroundColor: '#1a1a1a', // 이미지 로드 전 기본 배경색
     },
     container: {
         flex: 1,
     },
     header: {
+        backgroundColor: 'rgba(26, 26, 26, 0.7)',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 20,
         borderBottomLeftRadius: 15,
         borderBottomRightRadius: 15,
-        backgroundColor: 'rgba(0, 0, 0, 0.25)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
+        zIndex: 100,
     },
     greeting: {
         fontSize: 16,
@@ -562,27 +610,37 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         padding: 20,
+
+    },
+    card: {
+        backgroundColor: 'rgba(26, 26, 26, 0.5)',
+        padding: 20,
+        borderRadius: 20,
+        marginBottom: 20,
+        borderColor: '#FFF',
+        borderWidth: 1,
     },
     statsCard: {
-        padding: 20,
-        borderRadius: 15,
-        marginBottom: 20,
-        backgroundColor: 'rgba(0, 0, 0, 0.25)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
+        // card 스타일 상속
     },
     sectionTitle: {
+
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#ffffffff',
+        color: '#FFFFFF',
         marginBottom: 15,
-        textShadowColor: 'black', // 테두리 색상 (검은색)
-        textShadowOffset: { width: 1, height: 1 }, // 그림자 위치 (오른쪽 아래 1px)
-        textShadowRadius: 0,
-        
+        ...Platform.select({
+            ios: {
+                textShadowColor: 'black',
+                textShadowOffset: { width: 1, height: 1 },
+                textShadowRadius: 0,
+            },
+            android: {
+                textShadowColor: 'rgba(0, 0, 0, 0.75)',
+                textShadowOffset: { width: 1, height: 1 },
+                textShadowRadius: 3,
+            },
+        }),
     },
     statsGrid: {
         flexDirection: 'row',
@@ -613,16 +671,9 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: 20,
     },
-    quickAction: {
+    quickActionsCard: {
         width: '48%',
-        marginBottom: 15,
-        borderRadius: 15,
-        backgroundColor: 'rgba(0, 0, 0, 0.25)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
+        // card 스타일 상속 (padding, borderRadius, marginBottom, border 등)
     },
     quickActionBlur: {
         padding: 20,
@@ -658,12 +709,6 @@ const styles = StyleSheet.create({
         padding: 20,
         borderRadius: 15,
         marginBottom: 20,
-        backgroundColor: 'rgba(0, 0, 0, 0.25)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
     },
     achievementsHeader: {
         flexDirection: 'row',
@@ -685,22 +730,14 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#FFF',
         marginTop: 8,
-        
-        
+
+
     },
     achievementTitleLocked: {
         opacity: 0.5,
     },
     weatherCard: {
-        padding: 20,
-        borderRadius: 15,
-        marginBottom: 20,
-        backgroundColor: 'rgba(0, 0, 0, 0.25)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
+        // card 스타일 상속
     },
     weatherHeader: {
         flexDirection: 'row',
@@ -742,12 +779,6 @@ const styles = StyleSheet.create({
         padding: 20,
         borderRadius: 15,
         marginBottom: 20,
-        backgroundColor: 'rgba(0, 0, 0, 0.25)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
     },
     facilityItem: {
         flexDirection: 'row',
@@ -779,11 +810,8 @@ const styles = StyleSheet.create({
         padding: 20,
         borderRadius: 15,
         marginBottom: 40,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 8,
+        overflow: 'hidden',
+        ...(Platform.OS === 'ios' ? getShadow(4) : {}),
     },
     startButtonText: {
         fontSize: 20,
