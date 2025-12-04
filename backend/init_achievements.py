@@ -8,7 +8,8 @@ import models
 # 데이터베이스 테이블 생성
 models.Base.metadata.create_all(bind=engine)
 
-    
+
+def init_achievements():
     # .env 로드
     from dotenv import load_dotenv
     load_dotenv()
