@@ -134,3 +134,6 @@ backend/uploads/
 run.pem
 *.pem
 
+
+# GitHub Actions
+.github/workflows/deploy.yml
