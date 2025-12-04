@@ -33,7 +33,13 @@ export default function LoginScreen({ navigation, onLogin }) {
 
             clearTimeout(timeoutId);
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (e) {
+                console.error('JSON parsing error:', e);
+                data = { detail: '서버 응답 형식이 올바르지 않습니다.' };
+            }
 
             if (response.ok) {
                 // 토큰 저장
@@ -63,7 +69,12 @@ export default function LoginScreen({ navigation, onLogin }) {
                     onLogin();
                 }
             } else {
-                Alert.alert('로그인 실패', data.detail || '이메일 또는 비밀번호가 올바르지 않습니다.');
+                console.log('Login failed status:', response.status);
+                if (response.status === 401) {
+                    Alert.alert('로그인 실패', '계정이 없거나 비밀번호가 틀렸습니다.\n(DB가 초기화되었으니 회원가입부터 해주세요!)');
+                } else {
+                    Alert.alert('로그인 실패', data.detail || '이메일 또는 비밀번호가 올바르지 않습니다.');
+                }
             }
         } catch (error) {
             console.error('로그인 오류:', error);

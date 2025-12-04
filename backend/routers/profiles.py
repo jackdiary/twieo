@@ -14,8 +14,23 @@ router = APIRouter(
     tags=["profile"],
 )
 
-UPLOAD_DIR = Path("uploads/avatars")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+@router.get("/", response_model=schemas.UserProfile)
+def get_my_profile(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """내 프로필 조회"""
+    profile = db.query(models.UserProfile).filter(models.UserProfile.user_id == current_user.id).first()
+    if not profile:
+        # 프로필이 없으면 생성 (회원가입 시 생성되지만 안전장치)
+        profile = models.UserProfile(user_id=current_user.id)
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+    
+    # Add username to response
+    result = profile.__dict__
+    result["username"] = current_user.username
+    return result
 
 @router.get("/{username}", response_model=schemas.UserProfile)
 def get_profile(username: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
