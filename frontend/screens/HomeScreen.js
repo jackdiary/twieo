@@ -544,7 +544,7 @@ export default function HomeScreen({ navigation }) {
                                         <Ionicons
                                             name={getAchievementIcon(achievement.category)}
                                             size={32}
-                                            color={achievement.unlocked ? getAchievementColor(achievement.category) : '#BDBDBD'}
+                                            color={achievement.unlocked ? getAchievementColor(achievement.category) : '#E0E0E0'}
                                         />
                                         <Text
                                             style={[

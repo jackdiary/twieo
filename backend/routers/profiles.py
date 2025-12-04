@@ -49,7 +49,7 @@ def get_profile(username: str, db: Session = Depends(get_db), current_user: mode
     result["username"] = user.username
     return result
 
-@router.put("/me", response_model=schemas.UserProfile)
+@router.put("/", response_model=schemas.UserProfile)
 def update_profile(profile_update: schemas.UserProfileUpdate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     """내 프로필 수정"""
     profile = db.query(models.UserProfile).filter(models.UserProfile.user_id == current_user.id).first()
@@ -67,7 +67,7 @@ def update_profile(profile_update: schemas.UserProfileUpdate, current_user: mode
     result["username"] = current_user.username
     return result
 
-@router.post("/me/avatar")
+@router.post("/avatar")
 async def upload_avatar(
     file: UploadFile = File(...),
     current_user: models.User = Depends(get_current_user),
