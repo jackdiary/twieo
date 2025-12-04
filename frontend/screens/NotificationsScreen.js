@@ -57,14 +57,14 @@ export default function NotificationsScreen({ navigation }) {
         try {
             const { status: existingStatus } = await Notifications.getPermissionsAsync();
             let finalStatus = existingStatus;
-            
+
             if (existingStatus !== 'granted') {
                 const { status } = await Notifications.requestPermissionsAsync();
                 finalStatus = status;
             }
-            
+
             setPermissionGranted(finalStatus === 'granted');
-            
+
             if (finalStatus !== 'granted') {
                 Alert.alert(
                     '알림 권한 필요',
@@ -107,8 +107,8 @@ export default function NotificationsScreen({ navigation }) {
                 '알림을 활성화하려면 먼저 알림 권한을 허용해주세요.',
                 [
                     { text: '취소', style: 'cancel' },
-                    { 
-                        text: '설정으로 이동', 
+                    {
+                        text: '설정으로 이동',
                         onPress: () => {
                             if (Notifications) {
                                 Notifications.requestPermissionsAsync();
@@ -124,7 +124,7 @@ export default function NotificationsScreen({ navigation }) {
             ...notifications,
             [key]: !notifications[key]
         };
-        
+
         setNotifications(newSettings);
         await saveNotificationSettings(newSettings);
 
@@ -142,8 +142,8 @@ export default function NotificationsScreen({ navigation }) {
                 '알림을 활성화하려면 먼저 알림 권한을 허용해주세요.',
                 [
                     { text: '취소', style: 'cancel' },
-                    { 
-                        text: '설정으로 이동', 
+                    {
+                        text: '설정으로 이동',
                         onPress: () => {
                             if (Notifications) {
                                 Notifications.requestPermissionsAsync();
@@ -162,10 +162,10 @@ export default function NotificationsScreen({ navigation }) {
             weatherAlert: value,
             weeklyReport: value,
         };
-        
+
         setNotifications(newSettings);
         await saveNotificationSettings(newSettings);
-        
+
         Alert.alert(
             value ? '모든 알림 활성화' : '모든 알림 비활성화',
             value ? '모든 알림이 활성화되었습니다.' : '모든 알림이 비활성화되었습니다.'
@@ -177,7 +177,7 @@ export default function NotificationsScreen({ navigation }) {
 
     return (
         <LinearGradient
-            colors={['#FF6B6B', '#FFE66D', '#4ECDC4']}
+            colors={['#535353ff', '#e2cbcbff', '#4ECDC4']}
             style={styles.container}
         >
             <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -195,8 +195,8 @@ export default function NotificationsScreen({ navigation }) {
                         <Text style={styles.loadingText}>설정 불러오는 중...</Text>
                     </View>
                 ) : (
-                    <ScrollView 
-                        style={styles.content} 
+                    <ScrollView
+                        style={styles.content}
                         contentContainerStyle={{ paddingBottom: 30 }}
                         showsVerticalScrollIndicator={false}
                     >
@@ -241,29 +241,29 @@ export default function NotificationsScreen({ navigation }) {
 
                         {/* 개별 알림 설정 */}
                         {notificationItems.map((item, index) => (
-                        <View 
-                            key={item.key} 
-                            style={[
-                                styles.notificationItem,
-                                index === 0 && styles.firstItem,
-                                index === notificationItems.length - 1 && styles.lastItem
-                            ]}
-                        >
-                            <View style={styles.iconContainer}>
-                                <Ionicons name={item.icon} size={24} color="#FF6B6B" />
+                            <View
+                                key={item.key}
+                                style={[
+                                    styles.notificationItem,
+                                    index === 0 && styles.firstItem,
+                                    index === notificationItems.length - 1 && styles.lastItem
+                                ]}
+                            >
+                                <View style={styles.iconContainer}>
+                                    <Ionicons name={item.icon} size={24} color="#FF6B6B" />
+                                </View>
+                                <View style={styles.textContainer}>
+                                    <Text style={styles.title}>{item.title}</Text>
+                                    <Text style={styles.subtitle}>{item.subtitle}</Text>
+                                </View>
+                                <Switch
+                                    value={notifications[item.key]}
+                                    onValueChange={() => toggleNotification(item.key)}
+                                    trackColor={{ false: '#E0E0E0', true: '#FF6B6B' }}
+                                    thumbColor="#FFF"
+                                />
                             </View>
-                            <View style={styles.textContainer}>
-                                <Text style={styles.title}>{item.title}</Text>
-                                <Text style={styles.subtitle}>{item.subtitle}</Text>
-                            </View>
-                            <Switch
-                                value={notifications[item.key]}
-                                onValueChange={() => toggleNotification(item.key)}
-                                trackColor={{ false: '#E0E0E0', true: '#FF6B6B' }}
-                                thumbColor="#FFF"
-                            />
-                        </View>
-                    ))}
+                        ))}
 
                         {/* 도움말 */}
                         <View style={styles.helpCard}>

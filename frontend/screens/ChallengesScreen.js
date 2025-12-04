@@ -9,6 +9,7 @@ import { API_URL } from '../config/api';
 export default function ChallengesScreen({ navigation }) {
     const [challenges, setChallenges] = useState([]);
     const [friends, setFriends] = useState([]);
+    const [currentUsername, setCurrentUsername] = useState('');
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -25,7 +26,7 @@ export default function ChallengesScreen({ navigation }) {
 
     const loadData = async () => {
         setLoading(true);
-        await Promise.all([loadChallenges(), loadFriends()]);
+        await Promise.all([loadChallenges(), loadFriends(), loadCurrentUser()]);
         setLoading(false);
     };
 
@@ -62,6 +63,17 @@ export default function ChallengesScreen({ navigation }) {
             }
         } catch (error) {
             console.error('친구 목록 로드 실패:', error);
+        }
+    };
+
+    const loadCurrentUser = async () => {
+        try {
+            const username = await AsyncStorage.getItem('username');
+            if (username) {
+                setCurrentUsername(username);
+            }
+        } catch (error) {
+            console.error('사용자 정보 로드 실패:', error);
         }
     };
 
@@ -147,7 +159,7 @@ export default function ChallengesScreen({ navigation }) {
     const renderChallengeCard = (challenge) => {
         const daysRemaining = getDaysRemaining(challenge.end_date);
         const isActive = daysRemaining > 0;
-        const myParticipant = challenge.participants.find(p => p.is_creator);
+        const myParticipant = challenge.participants.find(p => p.username === currentUsername);
         const progress = myParticipant ? (myParticipant.current_value / challenge.target_value) * 100 : 0;
 
         return (
@@ -211,7 +223,7 @@ export default function ChallengesScreen({ navigation }) {
     };
 
     return (
-        <LinearGradient colors={['#FF6B6B', '#FFE66D', '#4ECDC4']} style={styles.container}>
+        <LinearGradient colors={['#535353ff', '#e2cbcbff', '#4ECDC4']} style={styles.container}>
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()}>

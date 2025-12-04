@@ -22,7 +22,12 @@ def get_profile(current_user: models.User = Depends(get_current_user), db: Sessi
     profile = db.query(models.UserProfile).filter(models.UserProfile.user_id == current_user.id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    return profile
+    
+    # UserProfile 모델에는 username이 없으므로 User 모델에서 가져와서 추가해야 함
+    # Pydantic 모델 변환을 위해 dict로 변환 후 username 추가
+    profile_dict = profile.__dict__
+    profile_dict["username"] = current_user.username
+    return profile_dict
 
 @router.put("/", response_model=schemas.UserProfile)
 def update_profile(profile_update: schemas.UserProfileCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -37,7 +42,10 @@ def update_profile(profile_update: schemas.UserProfileCreate, current_user: mode
     
     db.commit()
     db.refresh(profile)
-    return profile
+    
+    profile_dict = profile.__dict__
+    profile_dict["username"] = current_user.username
+    return profile_dict
 
 @router.post("/avatar/")
 async def upload_avatar(

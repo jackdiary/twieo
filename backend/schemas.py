@@ -50,6 +50,7 @@ class UserProfile(UserProfileBase):
     total_runs: int
     longest_run: float
     best_pace: float
+    username: str
     
     class Config:
         from_attributes = True

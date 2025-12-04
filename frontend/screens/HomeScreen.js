@@ -268,13 +268,14 @@ export default function HomeScreen({ navigation }) {
 
     const getAchievementColor = (category) => {
         const colors = {
-            'distance': '#FFD700',
-            'count': '#C0C0C0',
-            'speed': '#42A5F5',
-            'streak': '#FF6B6B',
-            'special': '#9C27B0',
+            'distance': '#FFD700', // Gold
+            'runs': '#FFC107', // Amber
+            'count': '#FFD54F', // Light Amber
+            'speed': '#FDD835', // Yellow 600
+            'streak': '#FFB300', // Amber 600
+            'special': '#FFCA28', // Amber 400
         };
-        return colors[category] || '#4CAF50';
+        return colors[category] || '#FFC107'; // Default to Amber
     };
 
     const handleFacilityRecommendation = async () => {
@@ -616,9 +617,8 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(26, 26, 26, 0.5)',
         padding: 20,
         borderRadius: 20,
+        borderRadius: 20,
         marginBottom: 20,
-        borderColor: '#FFF',
-        borderWidth: 1,
     },
     statsCard: {
         // card 스타일 상속
@@ -629,18 +629,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#FFFFFF',
         marginBottom: 15,
-        ...Platform.select({
-            ios: {
-                textShadowColor: 'black',
-                textShadowOffset: { width: 1, height: 1 },
-                textShadowRadius: 0,
-            },
-            android: {
-                textShadowColor: 'rgba(0, 0, 0, 0.75)',
-                textShadowOffset: { width: 1, height: 1 },
-                textShadowRadius: 3,
-            },
-        }),
+        marginBottom: 15,
     },
     statsGrid: {
         flexDirection: 'row',
@@ -661,9 +650,7 @@ const styles = StyleSheet.create({
         color: '#FFF',
         opacity: 0.7,
         marginTop: 4,
-        textShadowColor: 'black', // 테두리 색상 (검은색)
-        textShadowOffset: { width: 1, height: 1 }, // 그림자 위치 (오른쪽 아래 1px)
-        textShadowRadius: 0,
+        marginTop: 4,
     },
     quickActionsContainer: {
         flexDirection: 'row',
@@ -693,21 +680,19 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#ffffffff',
         marginBottom: 4,
-        textShadowColor: 'black', // 테두리 색상 (검은색)
-        textShadowOffset: { width: 1, height: 1 }, // 그림자 위치 (오른쪽 아래 1px)
-        textShadowRadius: 0,
+        marginBottom: 4,
     },
     quickActionSubtitle: {
         fontSize: 12,
         color: '#FFF',
         opacity: 0.7,
-        textShadowColor: 'black', // 테두리 색상 (검은색)
-        textShadowOffset: { width: 1, height: 1 }, // 그림자 위치 (오른쪽 아래 1px)
-        textShadowRadius: 0,
+        opacity: 0.7,
     },
     achievementsCard: {
+        backgroundColor: 'rgba(26, 26, 26, 0.5)',
         padding: 20,
-        borderRadius: 15,
+        borderRadius: 20,
+        borderRadius: 20,
         marginBottom: 20,
     },
     achievementsHeader: {
@@ -730,8 +715,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#FFF',
         marginTop: 8,
-
-
+        marginTop: 8,
     },
     achievementTitleLocked: {
         opacity: 0.5,

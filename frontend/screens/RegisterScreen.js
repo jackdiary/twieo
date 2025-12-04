@@ -100,7 +100,13 @@ export default function RegisterScreen({ navigation, onRegister }) {
                         errorMessage = '입력한 정보를 확인해주세요.\n이메일 형식: user@example.com';
                     }
                 } else if (data.detail) {
-                    errorMessage = data.detail;
+                    if (data.detail === 'Username already taken') {
+                        errorMessage = '이미 사용 중인 닉네임입니다.\n다른 닉네임을 사용해주세요.';
+                    } else if (data.detail === 'Email already registered') {
+                        errorMessage = '이미 가입된 이메일입니다.\n로그인을 시도해주세요.';
+                    } else {
+                        errorMessage = data.detail;
+                    }
                 }
 
                 Alert.alert(

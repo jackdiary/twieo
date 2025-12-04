@@ -97,7 +97,7 @@ export default function HelpScreen({ navigation }) {
 
     return (
         <LinearGradient
-            colors={['#FF6B6B', '#FFE66D', '#4ECDC4']}
+            colors={['#535353ff', '#e2cbcbff', '#4ECDC4']}
             style={styles.container}
         >
             <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -109,15 +109,15 @@ export default function HelpScreen({ navigation }) {
                     <View style={{ width: 24 }} />
                 </View>
 
-                <ScrollView 
-                    style={styles.content} 
+                <ScrollView
+                    style={styles.content}
                     contentContainerStyle={styles.contentContainer}
                     showsVerticalScrollIndicator={false}
                 >
                     {/* App Info */}
                     <View style={styles.infoCard}>
-                        <Image 
-                            source={require('../rrrrrr.png')} 
+                        <Image
+                            source={require('../rrrrrr.png')}
                             style={styles.logo}
                             resizeMode="contain"
                         />

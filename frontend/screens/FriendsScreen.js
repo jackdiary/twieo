@@ -95,7 +95,7 @@ export default function FriendsScreen({ navigation }) {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
             });
-            
+
             if (response.ok) {
                 Alert.alert('성공', '친구 요청을 보냈습니다.');
                 setSearchQuery('');
@@ -117,7 +117,7 @@ export default function FriendsScreen({ navigation }) {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
             });
-            
+
             if (response.ok) {
                 Alert.alert('성공', '친구 요청을 수락했습니다.');
                 loadData();
@@ -135,7 +135,7 @@ export default function FriendsScreen({ navigation }) {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
             });
-            
+
             if (response.ok) {
                 Alert.alert('성공', '친구 요청을 거절했습니다.');
                 loadData();
@@ -162,7 +162,7 @@ export default function FriendsScreen({ navigation }) {
                                 method: 'DELETE',
                                 headers: { 'Authorization': `Bearer ${token}` },
                             });
-                            
+
                             if (response.ok) {
                                 Alert.alert('성공', '친구를 삭제했습니다.');
                                 loadData();
@@ -195,7 +195,7 @@ export default function FriendsScreen({ navigation }) {
                 <Text style={styles.friendName}>{friend.username}</Text>
                 <Text style={styles.friendStats}>{friend.total_distance?.toFixed(1) || 0}km 달성</Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() => deleteFriend(friend.id)}
             >
@@ -210,7 +210,7 @@ export default function FriendsScreen({ navigation }) {
             console.warn('Invalid friend request data:', request);
             return null;
         }
-        
+
         return (
             <View key={request.id} style={styles.requestItem}>
                 <View style={styles.avatarContainer}>
@@ -226,21 +226,21 @@ export default function FriendsScreen({ navigation }) {
                     <Text style={styles.friendName}>{request.username || '알 수 없음'}</Text>
                     <Text style={styles.friendStats}>Lv.{request.level || 1} · {request.total_distance?.toFixed(1) || 0}km</Text>
                 </View>
-            <View style={styles.requestButtons}>
-                <TouchableOpacity 
-                    style={styles.acceptButton}
-                    onPress={() => acceptFriendRequest(request.id)}
-                >
-                    <Ionicons name="checkmark" size={20} color="#FFF" />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                    style={styles.rejectButton}
-                    onPress={() => rejectFriendRequest(request.id)}
-                >
-                    <Ionicons name="close" size={20} color="#FFF" />
-                </TouchableOpacity>
+                <View style={styles.requestButtons}>
+                    <TouchableOpacity
+                        style={styles.acceptButton}
+                        onPress={() => acceptFriendRequest(request.id)}
+                    >
+                        <Ionicons name="checkmark" size={20} color="#FFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.rejectButton}
+                        onPress={() => rejectFriendRequest(request.id)}
+                    >
+                        <Ionicons name="close" size={20} color="#FFF" />
+                    </TouchableOpacity>
+                </View>
             </View>
-        </View>
         );
     };
 
@@ -262,7 +262,7 @@ export default function FriendsScreen({ navigation }) {
                 <Text style={styles.friendName}>{user.username}</Text>
                 <Text style={styles.friendStats}>{user.total_distance?.toFixed(1) || 0}km 달성</Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => sendFriendRequest(user.username)}
             >
@@ -273,7 +273,7 @@ export default function FriendsScreen({ navigation }) {
 
     return (
         <LinearGradient
-            colors={['#FF6B6B', '#FFE66D', '#4ECDC4']}
+            colors={['#535353ff', '#e2cbcbff', '#4ECDC4']}
             style={styles.container}
         >
             <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -332,8 +332,8 @@ export default function FriendsScreen({ navigation }) {
                 </View>
 
                 {/* Content */}
-                <ScrollView 
-                    style={styles.content} 
+                <ScrollView
+                    style={styles.content}
                     contentContainerStyle={{ paddingBottom: 30 }}
                     showsVerticalScrollIndicator={false}
                 >

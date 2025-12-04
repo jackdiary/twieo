@@ -49,13 +49,14 @@ export default function AchievementsScreen({ navigation }) {
 
     const getAchievementColor = (category) => {
         const colors = {
-            'distance': '#FFD700',
-            'count': '#C0C0C0',
-            'speed': '#42A5F5',
-            'streak': '#FF6B6B',
-            'special': '#9C27B0',
+            'distance': '#FFD700', // Gold
+            'runs': '#FFC107', // Amber
+            'count': '#FFD54F', // Light Amber
+            'speed': '#FDD835', // Yellow 600
+            'streak': '#FFB300', // Amber 600
+            'special': '#FFCA28', // Amber 400
         };
-        return colors[category] || '#4CAF50';
+        return colors[category] || '#FFC107'; // Default to Amber
     };
 
     const getCategoryName = (category) => {
@@ -79,7 +80,7 @@ export default function AchievementsScreen({ navigation }) {
     const totalCount = achievements.length;
 
     return (
-        <LinearGradient colors={['#FF6B6B', '#FFE66D', '#4ECDC4']} style={styles.container}>
+        <LinearGradient colors={['#535353ff', '#e2cbcbff', '#4ECDC4']} style={styles.container}>
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()}>

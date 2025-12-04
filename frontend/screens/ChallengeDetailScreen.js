@@ -56,7 +56,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
 
     if (loading) {
         return (
-            <LinearGradient colors={['#FF6B6B', '#FFE66D', '#4ECDC4']} style={styles.container}>
+            <LinearGradient colors={['#535353ff', '#e2cbcbff', '#4ECDC4']} style={styles.container}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#FFF" />
                 </View>
@@ -70,7 +70,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
     const isActive = daysRemaining > 0;
 
     return (
-        <LinearGradient colors={['#FF6B6B', '#FFE66D', '#4ECDC4']} style={styles.container}>
+        <LinearGradient colors={['#535353ff', '#e2cbcbff', '#4ECDC4']} style={styles.container}>
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()}>

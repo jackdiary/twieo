@@ -42,7 +42,10 @@ export default function HistoryScreen() {
 
             if (response.ok) {
                 const data = await response.json();
+                console.log('Run History Data:', JSON.stringify(data, null, 2));
                 setRunHistory(data);
+            } else {
+                console.log('Failed to fetch runs:', response.status);
             }
         } catch (error) {
             console.error('기록 로드 실패:', error);
@@ -106,126 +109,134 @@ export default function HistoryScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Calendar */}
-            {showCalendar && (
-                <View style={styles.calendarContainer}>
-                    <Calendar
-                        onDayPress={(day) => {
-                            setSelectedDate(day.dateString);
-                            setShowCalendar(false);
-                        }}
-                        markedDates={getMarkedDates()}
-                        theme={{
-                            todayTextColor: '#FF6B6B',
-                            selectedDayBackgroundColor: '#FF6B6B',
-                            selectedDayTextColor: '#FFF',
-                            arrowColor: '#FF6B6B',
-                        }}
-                    />
-                </View>
-            )}
-
-            {/* Period Selector */}
-            <View style={styles.periodSelector}>
-                {periods.map((period) => (
-                    <TouchableOpacity
-                        key={period.id}
-                        style={[
-                            styles.periodButton,
-                            selectedPeriod === period.id && styles.periodButtonActive,
-                        ]}
-                        onPress={() => setSelectedPeriod(period.id)}
-                    >
-                        <Text
-                            style={[
-                                styles.periodButtonText,
-                                selectedPeriod === period.id && styles.periodButtonTextActive,
-                            ]}
-                        >
-                            {period.label}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            {/* Weekly Summary */}
-            <View style={styles.summaryCard}>
-                <Text style={styles.summaryTitle}>이번 주 요약</Text>
-                <View style={styles.summaryGrid}>
-                    <View style={styles.summaryItem}>
-                        <Ionicons name="navigate" size={24} color="#FF6B6B" />
-                        <Text style={styles.summaryValue}>{weeklyStats.totalDistance}km</Text>
-                        <Text style={styles.summaryLabel}>총 거리</Text>
-                    </View>
-                    <View style={styles.summaryItem}>
-                        <Ionicons name="footsteps" size={24} color="#4CAF50" />
-                        <Text style={styles.summaryValue}>{weeklyStats.totalRuns}</Text>
-                        <Text style={styles.summaryLabel}>러닝 횟수</Text>
-                    </View>
-                    <View style={styles.summaryItem}>
-                        <Ionicons name="time" size={24} color="#FFA726" />
-                        <Text style={styles.summaryValue}>{Math.floor(weeklyStats.totalTime / 60)}h {weeklyStats.totalTime % 60}m</Text>
-                        <Text style={styles.summaryLabel}>총 시간</Text>
-                    </View>
-                    <View style={styles.summaryItem}>
-                        <Ionicons name="speedometer" size={24} color="#42A5F5" />
-                        <Text style={styles.summaryValue}>{weeklyStats.avgPace}</Text>
-                        <Text style={styles.summaryLabel}>평균 페이스</Text>
-                    </View>
-                </View>
-            </View>
-
-            {/* Run History List */}
             <ScrollView
-                style={styles.historyList}
-                showsVerticalScrollIndicator={false}
+                style={styles.mainContent}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                 }
             >
-                <Text style={styles.listTitle}>최근 활동</Text>
-                {loading ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#FF6B6B" />
+                {/* Calendar */}
+                {showCalendar && (
+                    <View style={styles.calendarContainer}>
+                        <Calendar
+                            onDayPress={(day) => {
+                                setSelectedDate(day.dateString);
+                                setShowCalendar(false);
+                            }}
+                            markedDates={getMarkedDates()}
+                            theme={{
+                                todayTextColor: '#FF6B6B',
+                                selectedDayBackgroundColor: '#FF6B6B',
+                                selectedDayTextColor: '#FFF',
+                                arrowColor: '#FF6B6B',
+                            }}
+                        />
                     </View>
-                ) : runHistory.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                        <Ionicons name="footsteps-outline" size={60} color="#CCC" />
-                        <Text style={styles.emptyText}>아직 러닝 기록이 없습니다</Text>
-                        <Text style={styles.emptySubtext}>첫 러닝을 시작해보세요!</Text>
-                    </View>
-                ) : (
-                    runHistory.map((run) => {
-                        const runDate = new Date(run.date);
-                        const dateStr = runDate.toLocaleDateString('ko-KR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                        });
-
-                        return (
-                            <TouchableOpacity key={run.id} style={styles.historyItem}>
-                                <View style={styles.historyIcon}>
-                                    <Ionicons name="footsteps" size={24} color="#FF6B6B" />
-                                </View>
-                                <View style={styles.historyDetails}>
-                                    <Text style={styles.historyDate}>{dateStr}</Text>
-                                    <View style={styles.historyStats}>
-                                        <Text style={styles.historyDistance}>{run.distance.toFixed(1)}km</Text>
-                                        <Text style={styles.historySeparator}>•</Text>
-                                        <Text style={styles.historyTime}>{Math.round(run.duration / 60)}분</Text>
-                                        <Text style={styles.historySeparator}>•</Text>
-                                        <Text style={styles.historyPace}>{run.pace.toFixed(1)} min/km</Text>
-                                    </View>
-                                </View>
-                                <View style={styles.historyCalories}>
-                                    <Text style={styles.caloriesValue}>{run.calories}</Text>
-                                    <Text style={styles.caloriesLabel}>kcal</Text>
-                                </View>
-                            </TouchableOpacity>
-                        );
-                    })
                 )}
+
+                {/* Period Selector */}
+                <View style={styles.periodSelector}>
+                    {periods.map((period) => (
+                        <TouchableOpacity
+                            key={period.id}
+                            style={[
+                                styles.periodButton,
+                                selectedPeriod === period.id && styles.periodButtonActive,
+                            ]}
+                            onPress={() => setSelectedPeriod(period.id)}
+                        >
+                            <Text
+                                style={[
+                                    styles.periodButtonText,
+                                    selectedPeriod === period.id && styles.periodButtonTextActive,
+                                ]}
+                            >
+                                {period.label}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                {/* Weekly Summary */}
+                <View style={styles.summaryCard}>
+                    <Text style={styles.summaryTitle}>이번 주 요약</Text>
+                    <View style={styles.summaryGrid}>
+                        <View style={styles.summaryItem}>
+                            <Ionicons name="navigate" size={24} color="#FF6B6B" />
+                            <Text style={styles.summaryValue}>{weeklyStats.totalDistance}km</Text>
+                            <Text style={styles.summaryLabel}>총 거리</Text>
+                        </View>
+                        <View style={styles.summaryItem}>
+                            <Ionicons name="footsteps" size={24} color="#4CAF50" />
+                            <Text style={styles.summaryValue}>{weeklyStats.totalRuns}</Text>
+                            <Text style={styles.summaryLabel}>러닝 횟수</Text>
+                        </View>
+                        <View style={styles.summaryItem}>
+                            <Ionicons name="time" size={24} color="#FFA726" />
+                            <Text style={styles.summaryValue}>{Math.floor(weeklyStats.totalTime / 60)}h {weeklyStats.totalTime % 60}m</Text>
+                            <Text style={styles.summaryLabel}>총 시간</Text>
+                        </View>
+                        <View style={styles.summaryItem}>
+                            <Ionicons name="speedometer" size={24} color="#42A5F5" />
+                            <Text style={styles.summaryValue}>{weeklyStats.avgPace}</Text>
+                            <Text style={styles.summaryLabel}>평균 페이스</Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Run History List */}
+                <View>
+                    <Text style={styles.listTitle}>최근 활동</Text>
+                    <ScrollView
+                        style={styles.historyList}
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        showsVerticalScrollIndicator={true}
+                        nestedScrollEnabled={true}
+                    >
+                        {loading ? (
+                            <View style={styles.loadingContainer}>
+                                <ActivityIndicator size="large" color="#FF6B6B" />
+                            </View>
+                        ) : runHistory.length === 0 ? (
+                            <View style={styles.emptyContainer}>
+                                <Ionicons name="footsteps-outline" size={60} color="#CCC" />
+                                <Text style={styles.emptyText}>아직 러닝 기록이 없습니다</Text>
+                                <Text style={styles.emptySubtext}>첫 러닝을 시작해보세요!</Text>
+                            </View>
+                        ) : (
+                            runHistory.map((run) => {
+                                const runDate = new Date(run.date);
+                                const dateStr = runDate.toLocaleDateString('ko-KR', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                });
+
+                                return (
+                                    <TouchableOpacity key={run.id} style={styles.historyItem}>
+                                        <View style={styles.historyIcon}>
+                                            <Ionicons name="footsteps" size={24} color="#FF6B6B" />
+                                        </View>
+                                        <View style={styles.historyDetails}>
+                                            <Text style={styles.historyDate}>{dateStr}</Text>
+                                            <View style={styles.historyStats}>
+                                                <Text style={styles.historyDistance}>{run.distance.toFixed(1)}km</Text>
+                                                <Text style={styles.historySeparator}>•</Text>
+                                                <Text style={styles.historyTime}>{Math.round(run.duration / 60)}분</Text>
+                                                <Text style={styles.historySeparator}>•</Text>
+                                                <Text style={styles.historyPace}>{run.pace.toFixed(1)} min/km</Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.historyCalories}>
+                                            <Text style={styles.caloriesValue}>{run.calories}</Text>
+                                            <Text style={styles.caloriesLabel}>kcal</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })
+                        )}
+                    </ScrollView>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
@@ -246,6 +257,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 15,
         marginBottom: 10,
+        marginHorizontal: 10,
     },
     headerTitle: {
         fontSize: 24,
@@ -259,6 +271,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         borderColor: 'rgba(0, 0, 0, 0.5)',
         borderWidth: 1,
+        marginHorizontal: 10,
     },
     periodSelector: {
         flexDirection: 'row',
@@ -268,6 +281,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         borderColor: 'rgba(0, 0, 0, 0.5)',
         borderWidth: 1,
+        marginHorizontal: 10,
     },
     periodButton: {
         flex: 1,
@@ -295,6 +309,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         borderColor: 'rgba(0, 0, 0, 0.5)',
         borderWidth: 1,
+        marginHorizontal: 10,
     },
     summaryTitle: {
         fontSize: 18,
@@ -321,8 +336,11 @@ const styles = StyleSheet.create({
         color: '#666',
         marginTop: 4,
     },
-    historyList: {
+    mainContent: {
         flex: 1,
+    },
+    historyList: {
+        marginBottom: 20,
     },
     listTitle: {
         fontSize: 18,
@@ -400,7 +418,6 @@ const styles = StyleSheet.create({
         padding: 40,
         alignItems: 'center',
         backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        margin: 20,
         borderRadius: 15,
         borderColor: 'rgba(0, 0, 0, 0.5)',
         borderWidth: 1,

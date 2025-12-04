@@ -73,8 +73,15 @@ export default function ProfileScreen({ navigation }) {
 
             if (response.ok) {
                 const data = await response.json();
+                console.log('Profile Data:', JSON.stringify(data, null, 2));
+                // 닉네임이 없으면 AsyncStorage에서 확인하거나 기본값 사용
+                let username = data.username;
+                if (!username) {
+                    username = await AsyncStorage.getItem('username');
+                }
+
                 setUserStats({
-                    name: data.username,
+                    name: username || '러너',
                     level: data.level,
                     totalDistance: data.total_distance || 0,
                     totalRuns: data.total_runs || 0,
@@ -207,13 +214,14 @@ export default function ProfileScreen({ navigation }) {
 
     const getAchievementColor = (category) => {
         const colors = {
-            'distance': '#FFD700',
-            'count': '#C0C0C0',
-            'speed': '#42A5F5',
-            'streak': '#FF6B6B',
-            'special': '#9C27B0',
+            'distance': '#FFD700', // Gold
+            'runs': '#FFC107', // Amber
+            'count': '#FFD54F', // Light Amber
+            'speed': '#FDD835', // Yellow 600
+            'streak': '#FFB300', // Amber 600
+            'special': '#FFCA28', // Amber 400
         };
-        return colors[category] || '#4CAF50';
+        return colors[category] || '#FFC107'; // Default to Amber
     };
 
     const getPeriodName = (period) => {
@@ -595,6 +603,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         borderColor: 'rgba(0, 0, 0, 0.5)',
         borderWidth: 1,
+        marginHorizontal: 10,
     },
     avatarContainer: {
         position: 'relative',
@@ -678,6 +687,7 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         marginBottom: 20,
+        marginHorizontal: 10,
     },
     statCard: {
         width: '48%',
@@ -707,6 +717,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         borderColor: 'rgba(0, 0, 0, 0.5)',
         borderWidth: 1,
+        marginHorizontal: 10,
     },
     sectionTitle: {
         fontSize: 18,
@@ -791,6 +802,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderColor: 'rgba(0, 0, 0, 0.5)',
         borderWidth: 1,
+        marginHorizontal: 10,
     },
     logoutText: {
         fontSize: 16,

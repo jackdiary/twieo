@@ -12,7 +12,7 @@ export default function GoalsScreen({ navigation }) {
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
     const [activeTab, setActiveTab] = useState('active'); // 'active' or 'completed'
-    
+
     // 새 목표 입력
     const [goalType, setGoalType] = useState('distance'); // distance, count, time
     const [period, setPeriod] = useState('weekly'); // daily, weekly, monthly
@@ -169,7 +169,7 @@ export default function GoalsScreen({ navigation }) {
                         </TouchableOpacity>
                     )}
                 </View>
-                
+
                 <View style={styles.goalProgress}>
                     <Text style={styles.goalValue}>
                         {goal.current_value.toFixed(1)} / {goal.target_value} {getGoalUnit(goal.goal_type)}
@@ -192,7 +192,7 @@ export default function GoalsScreen({ navigation }) {
     };
 
     return (
-        <LinearGradient colors={['#FF6B6B', '#FFE66D', '#4ECDC4']} style={styles.container}>
+        <LinearGradient colors={['#535353ff', '#e2cbcbff', '#4ECDC4']} style={styles.container}>
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -225,8 +225,8 @@ export default function GoalsScreen({ navigation }) {
                 </View>
 
                 {/* Content */}
-                <ScrollView 
-                    style={styles.content} 
+                <ScrollView
+                    style={styles.content}
                     contentContainerStyle={{ paddingBottom: 30 }}
                     showsVerticalScrollIndicator={false}
                 >
