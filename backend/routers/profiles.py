@@ -14,6 +14,7 @@ router = APIRouter(
     tags=["profile"],
 )
 
+UPLOAD_DIR = Path("uploads/avatars")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.get("/", response_model=schemas.UserProfile)
