@@ -2,6 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 환경변수에서 데이터베이스 URL을 가져옵니다.
 # 이 URL은 로컬에서는 .env 파일을 통해, 서버에서는 시스템 환경변수를 통해 주입됩니다.

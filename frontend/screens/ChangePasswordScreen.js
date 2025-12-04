@@ -69,17 +69,20 @@ export default function ChangePasswordScreen({ navigation }) {
             </View>
 
             <View style={styles.content}>
+                <Text style={styles.label}>현재 비밀번호</Text>
                 <View style={styles.inputContainer}>
                     <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
                     <TextInput
                         style={styles.input}
-                        placeholder="현재 비밀번호"
+                        placeholder="현재 비밀번호를 입력하세요"
                         value={currentPassword}
                         onChangeText={setCurrentPassword}
                         secureTextEntry
+                        placeholderTextColor="#999"
                     />
                 </View>
 
+                <Text style={styles.label}>새 비밀번호</Text>
                 <View style={styles.inputContainer}>
                     <Ionicons name="lock-open-outline" size={20} color="#666" style={styles.inputIcon} />
                     <TextInput
@@ -88,17 +91,20 @@ export default function ChangePasswordScreen({ navigation }) {
                         value={newPassword}
                         onChangeText={setNewPassword}
                         secureTextEntry
+                        placeholderTextColor="#999"
                     />
                 </View>
 
+                <Text style={styles.label}>새 비밀번호 확인</Text>
                 <View style={styles.inputContainer}>
                     <Ionicons name="checkmark-circle-outline" size={20} color="#666" style={styles.inputIcon} />
                     <TextInput
                         style={styles.input}
-                        placeholder="새 비밀번호 확인"
+                        placeholder="새 비밀번호를 다시 입력하세요"
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
                         secureTextEntry
+                        placeholderTextColor="#999"
                     />
                 </View>
 
@@ -142,6 +148,13 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 8,
+        marginLeft: 4,
     },
     inputContainer: {
         flexDirection: 'row',
