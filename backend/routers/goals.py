@@ -77,7 +77,7 @@ def delete_goal(goal_id: int, current_user: models.User = Depends(get_current_us
     ).first()
     
     if not goal:
-        raise HTTPException(status_code=404, detail="Goal not found")
+        raise HTTPException(status_code=404, detail="목표를 찾을 수 없습니다")
     
     db.delete(goal)
     db.commit()

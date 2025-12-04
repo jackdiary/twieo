@@ -15,12 +15,12 @@ router = APIRouter(prefix="/api/achievements", tags=["achievements"])
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     payload = decode_token(token)
     if payload is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="자격 증명이 유효하지 않습니다")
     
     email = payload.get("sub")
     user = db.query(models.User).filter(models.User.email == email).first()
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="사용자를 찾을 수 없습니다")
     return user
 
 @router.get("/")

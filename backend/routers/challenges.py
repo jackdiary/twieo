@@ -15,12 +15,12 @@ router = APIRouter(prefix="/api/challenges", tags=["challenges"])
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     payload = decode_token(token)
     if payload is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="자격 증명이 유효하지 않습니다")
     
     email = payload.get("sub")
     user = db.query(models.User).filter(models.User.email == email).first()
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="사용자를 찾을 수 없습니다")
     return user
 
 @router.post("/")
@@ -115,7 +115,7 @@ def get_challenge(challenge_id: int, current_user: models.User = Depends(get_cur
     """챌린지 상세"""
     challenge = db.query(models.Challenge).filter(models.Challenge.id == challenge_id).first()
     if not challenge:
-        raise HTTPException(status_code=404, detail="Challenge not found")
+        raise HTTPException(status_code=404, detail="챌린지를 찾을 수 없습니다")
     
     # 참가자 확인
     participant = db.query(models.ChallengeParticipant).filter(
@@ -124,7 +124,7 @@ def get_challenge(challenge_id: int, current_user: models.User = Depends(get_cur
     ).first()
     
     if not participant:
-        raise HTTPException(status_code=403, detail="Not a participant")
+        raise HTTPException(status_code=403, detail="참가자가 아닙니다")
     
     # 참가자 정보
     participants = db.query(models.ChallengeParticipant).filter(

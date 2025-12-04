@@ -14,12 +14,12 @@ router = APIRouter(prefix="/api/friends", tags=["friends"])
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     payload = decode_token(token)
     if payload is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="자격 증명이 유효하지 않습니다")
     
     email = payload.get("sub")
     user = db.query(models.User).filter(models.User.email == email).first()
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="사용자를 찾을 수 없습니다")
     return user
 
 @router.get("/search")
@@ -57,10 +57,10 @@ def send_friend_request(friend_username: str, current_user: models.User = Depend
     
     friend = db.query(models.User).filter(models.User.username == friend_username).first()
     if not friend:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
     
     if friend.id == current_user.id:
-        raise HTTPException(status_code=400, detail="Cannot add yourself")
+        raise HTTPException(status_code=400, detail="자기 자신을 친구로 추가할 수 없습니다")
     
     # 상대방의 친구 수도 확인
     friend_count = db.query(models.Friendship).filter(
@@ -79,9 +79,9 @@ def send_friend_request(friend_username: str, current_user: models.User = Depend
     
     if existing:
         if existing.status == "accepted":
-            raise HTTPException(status_code=400, detail="Already friends")
+            raise HTTPException(status_code=400, detail="이미 친구입니다")
         else:
-            raise HTTPException(status_code=400, detail="Friend request already sent")
+            raise HTTPException(status_code=400, detail="이미 친구 요청을 보냈습니다")
     
     friendship = models.Friendship(user_id=current_user.id, friend_id=friend.id, status="pending")
     db.add(friendship)
@@ -131,7 +131,7 @@ def accept_friend_request(friendship_id: int, current_user: models.User = Depend
     ).first()
     
     if not friendship:
-        raise HTTPException(status_code=404, detail="Friend request not found")
+        raise HTTPException(status_code=404, detail="친구 요청을 찾을 수 없습니다")
     
     friendship.status = "accepted"
     db.commit()
@@ -147,7 +147,7 @@ def reject_friend_request(friendship_id: int, current_user: models.User = Depend
     ).first()
     
     if not friendship:
-        raise HTTPException(status_code=404, detail="Friend request not found")
+        raise HTTPException(status_code=404, detail="친구 요청을 찾을 수 없습니다")
     
     db.delete(friendship)
     db.commit()
@@ -188,7 +188,7 @@ def remove_friend(friend_id: int, current_user: models.User = Depends(get_curren
     ).first()
     
     if not friendship:
-        raise HTTPException(status_code=404, detail="Friendship not found")
+        raise HTTPException(status_code=404, detail="친구 관계를 찾을 수 없습니다")
     
     db.delete(friendship)
     db.commit()
