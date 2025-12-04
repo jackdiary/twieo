@@ -17,6 +17,9 @@ export default function LoginScreen({ navigation, onLogin }) {
         }
 
         setLoading(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+
         try {
             const formData = new FormData();
             formData.append('username', email);
@@ -25,7 +28,10 @@ export default function LoginScreen({ navigation, onLogin }) {
             const response = await fetch(`${API_URL}/api/auth/login/`, {
                 method: 'POST',
                 body: formData,
+                signal: controller.signal,
             });
+
+            clearTimeout(timeoutId);
 
             const data = await response.json();
 
@@ -61,7 +67,11 @@ export default function LoginScreen({ navigation, onLogin }) {
             }
         } catch (error) {
             console.error('로그인 오류:', error);
-            Alert.alert('오류', '서버와 연결할 수 없습니다. 네트워크를 확인해주세요.');
+            if (error.name === 'AbortError') {
+                Alert.alert('연결 시간 초과', '서버 응답이 없습니다. 서버 상태를 확인해주세요.');
+            } else {
+                Alert.alert('오류', '서버와 연결할 수 없습니다. 네트워크를 확인해주세요.');
+            }
         } finally {
             setLoading(false);
         }

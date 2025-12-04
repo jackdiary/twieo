@@ -26,8 +26,8 @@ if ENVIRONMENT == "production":
     allowed_origins = [
         "https://twieo.shop",
         "https://www.twieo.shop",
-        "http://110.165.18.249",
-        "http://110.165.18.249:8000",
+        "http://34.64.95.143",
+        "http://34.64.95.143:8000",
         "http://localhost:8081",  # Expo 웹 개발
         "http://localhost:19006",  # Expo 웹 대체 포트
     ]

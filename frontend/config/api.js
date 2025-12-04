@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 const API_CONFIG = {
     // 프로덕션 환경 (네이버 클라우드 서버)
     production: {
-        apiUrl: 'http://110.165.18.249:8000',  // 네이버 클라우드 서버
+        apiUrl: 'http://34.64.95.143:8000',  // 구글 클라우드 서버
     },
     // 개발 환경
     development: {
