@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Dimensions, ActivityIndicator, Alert, ScrollView, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import * as Speech from 'expo-speech';
@@ -141,8 +141,13 @@ export default function RunScreen() {
                 return;
             }
 
-            let location = await Location.getCurrentPositionAsync({});
-            setLocation(location);
+            // 1. 캐시된 마지막 위치 먼저 가져오기 (속도 개선)
+            let lastKnown = await Location.getLastKnownPositionAsync({});
+            if (lastKnown) setLocation(lastKnown);
+
+            // 2. 정확한 현재 위치 가져오기
+            let currentLocation = await Location.getCurrentPositionAsync({});
+            setLocation(currentLocation);
         })();
     }, []);
 
@@ -324,11 +329,20 @@ export default function RunScreen() {
     };
 
     const saveRun = async () => {
+        const runData = {
+            distance: runStats.distance,
+            duration: runStats.time,
+            pace: runStats.pace,
+            calories: Math.round(runStats.calories),
+            route: routePath,
+            date: new Date().toISOString(), // 날짜 추가
+        };
+
         try {
             const token = await AsyncStorage.getItem('token');
             if (!token) {
-                Alert.alert('오류', '로그인이 필요합니다.');
-                return;
+                // 비로그인 상태에서도 로컬 저장 시도
+                throw new Error('No token');
             }
 
             const response = await fetch(`${API_URL}/api/runs/`, {
@@ -337,23 +351,31 @@ export default function RunScreen() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
-                body: JSON.stringify({
-                    distance: runStats.distance,
-                    duration: runStats.time,
-                    pace: runStats.pace,
-                    calories: Math.round(runStats.calories),
-                    route: routePath,
-                }),
+                body: JSON.stringify(runData),
             });
 
             if (response.ok) {
                 Alert.alert('성공! 🎉', '러닝 기록이 저장되었습니다.');
             } else {
-                Alert.alert('오류', '기록 저장에 실패했습니다.');
+                throw new Error('Server error');
             }
         } catch (error) {
-            console.error('저장 실패:', error);
-            Alert.alert('오류', '기록 저장 중 문제가 발생했습니다.');
+            console.error('전송 실패, 로컬 저장 시도:', error);
+            try {
+                // 로컬 저장 로직
+                const existingRuns = await AsyncStorage.getItem('unsaved_runs');
+                const runs = existingRuns ? JSON.parse(existingRuns) : [];
+                runs.push(runData);
+                await AsyncStorage.setItem('unsaved_runs', JSON.stringify(runs));
+
+                Alert.alert(
+                    '전송 실패 ⚠️',
+                    '서버와 연결할 수 없어 기기에 임시 저장했습니다.\n나중에 다시 시도해주세요.'
+                );
+            } catch (localError) {
+                console.error('로컬 저장 실패:', localError);
+                Alert.alert('오류 🚨', '기록을 저장할 수 없습니다.');
+            }
         }
     };
 
@@ -388,48 +410,12 @@ export default function RunScreen() {
                         </Text>
                     </View>
                 ) : (
-                    <MapView
-                        style={styles.map}
-                        provider={PROVIDER_GOOGLE}
-                        initialRegion={{
-                            latitude: location.coords.latitude,
-                            longitude: location.coords.longitude,
-                            latitudeDelta: 0.015,
-                            longitudeDelta: 0.015,
-                        }}
-                        showsUserLocation={true}
-                        followsUserLocation={isRunning}
-                    >
-                        {/* 생성된 코스 표시 (러닝 중에도 표시, 회색으로) */}
-                        {selectedRoute.length > 0 && (
-                            <>
-                                <Polyline
-                                    coordinates={selectedRoute}
-                                    strokeColor="#004288" // 회색으로 변경하여 실제 경로와 구분
-                                    strokeWidth={5}
-                                    lineDashPattern={[10, 5]} // 점선 효과
-                                />
-                                <Marker coordinate={selectedRoute[0]} title="출발점 🚩" />
-                                {selectedRoute.length > 1 && (
-                                    <Marker coordinate={selectedRoute[selectedRoute.length - 1]} title="도착점 🏁" pinColor="blue" />
-                                )}
-                            </>
-                        )}
-
-                        {/* 실제 러닝 경로 표시 */}
-                        {routePath.length > 0 && isRunning && (
-                            <>
-                                <Polyline
-                                    coordinates={routePath}
-                                    strokeColor="#4CAF50"
-                                    strokeWidth={6}
-                                />
-                                {routePath.length > 0 && (
-                                    <Marker coordinate={routePath[0]} title="출발! 🚩" />
-                                )}
-                            </>
-                        )}
-                    </MapView>
+                    <RunMap
+                        location={location}
+                        isRunning={isRunning}
+                        selectedRoute={selectedRoute}
+                        routePath={routePath}
+                    />
                 )
             ) : (
                 <View style={styles.loadingContainer}>
@@ -781,4 +767,61 @@ const styles = StyleSheet.create({
         color: '#666',
         marginTop: 10,
     },
+});
+
+// Memoized Map Component to prevent re-renders on timer ticks
+const RunMap = memo(({ location, isRunning, selectedRoute, routePath }) => {
+    return (
+        <MapView
+            style={styles.map}
+            provider={PROVIDER_GOOGLE}
+            initialRegion={{
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.015,
+                longitudeDelta: 0.015,
+            }}
+            showsUserLocation={true}
+            followsUserLocation={isRunning}
+        >
+            {/* 생성된 코스 표시 */}
+            {selectedRoute.length > 0 && (
+                <>
+                    <Polyline
+                        coordinates={selectedRoute}
+                        strokeColor="#004288"
+                        strokeWidth={5}
+                        lineDashPattern={[10, 5]}
+                    />
+                    <Marker coordinate={selectedRoute[0]} title="출발점 🚩" />
+                    {selectedRoute.length > 1 && (
+                        <Marker coordinate={selectedRoute[selectedRoute.length - 1]} title="도착점 🏁" pinColor="blue" />
+                    )}
+                </>
+            )}
+
+            {/* 실제 러닝 경로 표시 */}
+            {routePath.length > 0 && isRunning && (
+                <>
+                    <Polyline
+                        coordinates={routePath}
+                        strokeColor="#4CAF50"
+                        strokeWidth={6}
+                    />
+                    {routePath.length > 0 && (
+                        <Marker coordinate={routePath[0]} title="출발! 🚩" />
+                    )}
+                </>
+            )}
+        </MapView>
+    );
+}, (prevProps, nextProps) => {
+    // Custom comparison function for performance
+    // Only re-render if these props change
+    return (
+        prevProps.location === nextProps.location &&
+        prevProps.isRunning === nextProps.isRunning &&
+        prevProps.selectedRoute === nextProps.selectedRoute &&
+        prevProps.routePath === nextProps.routePath
+    );
 });
