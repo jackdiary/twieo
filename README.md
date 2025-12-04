@@ -1,3 +1,5 @@
+<img width="415" height="796" alt="image" src="https://github.com/user-attachments/assets/012c3934-9550-42a0-92b4-585ca6d5a961" />
+
 # 뛰어 (Twieo)
 
 날씨 기반 러닝 코스 추천 및 실내 시설 안내 앱
