@@ -40,26 +40,19 @@ def generate_course_endpoint(request: CourseRequest):
     #     facilities = facility_service.get_indoor_facilities(request.lat, request.lon, weather_condition="bad")
     #     raise HTTPException(status_code=400, detail={"status": "bad_weather", "facilities": facilities, "reason": weather_data['recommendation']})
     
-    if generate_multiple_routes:
-        try:
-            routes = generate_multiple_routes(request.lat, request.lon, request.distance, request.preference, count=3)
-            if routes:
-                return {"status": "success", "routes": routes}
-        except Exception as e:
-            print(f"Route generation error: {e}")
+    if generate_multiple_routes is None:
+        raise HTTPException(status_code=501, detail="Route generation service is not available.")
+
+    print(f"Attempting to generate routes for {request.lat}, {request.lon}")
+    # 사용자가 시간 걸려도 좋으니 무조건 실제 코스 생성하라고 함 (fallback 제거)
+    routes = generate_multiple_routes(request.lat, request.lon, request.distance, request.preference, count=3)
+    if routes:
+        print("Routes generated successfully")
+        return {"status": "success", "routes": routes}
     
-    # Dummy course generation as fallback
-    dummy_routes = [
-        {
-            "distance": request.distance,
-            "description": f"추천 코스 1 - {request.preference} 스타일",
-            "waypoints": [
-                {"lat": request.lat, "lon": request.lon},
-                {"lat": request.lat + 0.01, "lon": request.lon + 0.01}
-            ]
-        }
-    ]
-    return {"status": "success", "routes": dummy_routes}
+    # generate_multiple_routes가 없거나 빈 리스트를 반환한 경우에만 여기로 옴 (에러나면 500 에러 발생)
+    print("No routes generated")
+    return {"status": "error", "message": "No routes generated"}
 
 @router.get("/")
 def read_root():
