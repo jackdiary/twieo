@@ -35,10 +35,10 @@ def get_indoor_facilities_api(lat: float, lon: float, weather_condition: str = "
 @router.post("/generate_course")
 def generate_course_endpoint(request: CourseRequest):
     """러닝 코스 생성"""
-    weather_data = weather_service.get_weather(request.lat, request.lon)
-    if not weather_data['is_good_for_running']:
-        facilities = facility_service.get_indoor_facilities(request.lat, request.lon, weather_condition="bad")
-        raise HTTPException(status_code=400, detail={"status": "bad_weather", "facilities": facilities, "reason": weather_data['recommendation']})
+    # weather_data = weather_service.get_weather(request.lat, request.lon)
+    # if not weather_data['is_good_for_running']:
+    #     facilities = facility_service.get_indoor_facilities(request.lat, request.lon, weather_condition="bad")
+    #     raise HTTPException(status_code=400, detail={"status": "bad_weather", "facilities": facilities, "reason": weather_data['recommendation']})
     
     if generate_multiple_routes:
         try:
